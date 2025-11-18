@@ -11,9 +11,74 @@ type Auth {
   user: User!
 }
 
+type Category {
+  """子分类列表"""
+  children: [Category]
+
+  """分类颜色（十六进制）"""
+  color: String
+
+  """Identifies the date and time when the object was created."""
+  createdAt: DateTime!
+
+  """分类描述"""
+  description: String
+
+  """分类图标"""
+  icon: String
+  id: ID!
+
+  """分类名称"""
+  name: String!
+
+  """排序权重（数字越小越靠前）"""
+  order: Int!
+
+  """父分类对象"""
+  parent: Category
+
+  """父分类 ID（顶级分类为 null）"""
+  parentId: String
+
+  """该分类下的文章数量"""
+  postCount: Int!
+
+  """分类下的文章列表"""
+  posts: [Post]
+
+  """URL 友好的唯一标识符"""
+  slug: String!
+
+  """Identifies the date and time when the object was last updated."""
+  updatedAt: DateTime!
+}
+
 input ChangePasswordInput {
   newPassword: String!
   oldPassword: String!
+}
+
+input CreateCategoryInput {
+  """分类颜色（十六进制）"""
+  color: String
+
+  """分类描述"""
+  description: String
+
+  """分类图标"""
+  icon: String
+
+  """分类名称"""
+  name: String!
+
+  """排序权重"""
+  order: Int = 0
+
+  """父分类 ID"""
+  parentId: String
+
+  """URL 友好的唯一标识符"""
+  slug: String!
 }
 
 input CreatePostInput {
@@ -38,10 +103,27 @@ input LoginInput {
 
 type Mutation {
   changePassword(data: ChangePasswordInput!): User!
+
+  """创建新分类"""
+  createCategory(data: CreateCategoryInput!): Category!
   createPost(data: CreatePostInput!): Post!
+
+  """删除分类"""
+  deleteCategory(
+    """分类 ID"""
+    id: String!
+  ): Category!
   login(data: LoginInput!): Auth!
   refreshToken(token: JWT!): Token!
   signup(data: SignupInput!): Auth!
+
+  """更新分类"""
+  updateCategory(
+    data: UpdateCategoryInput!
+
+    """分类 ID"""
+    id: String!
+  ): Category!
   updateUser(data: UpdateUserInput!): User!
 }
 
@@ -101,11 +183,37 @@ enum PostOrderField {
 }
 
 type Query {
+  """获取所有分类列表"""
+  categories: [Category!]!
+
+  """根据 ID 获取单个分类"""
+  category(
+    """分类 ID"""
+    id: String!
+  ): Category!
+
+  """获取分类的祖先路径（面包屑导航）"""
+  categoryAncestors(
+    """分类 ID"""
+    id: String!
+  ): [Category!]!
+
+  """根据 slug 获取单个分类"""
+  categoryBySlug(slug: String!): Category!
+
+  """获取分类的所有后代分类"""
+  categoryDescendants(
+    """分类 ID"""
+    id: String!
+  ): [Category!]!
   hello(name: String!): String!
   helloWorld: String!
   me: User!
   post: Post!
   publishedPosts(orderBy: PostOrder, query: String): PostConnection!
+
+  """获取顶级分类列表"""
+  topLevelCategories: [Category!]!
   userPosts: [Post!]!
 }
 
@@ -132,6 +240,29 @@ type Token {
 
   """JWT refresh token"""
   refreshToken: JWT!
+}
+
+input UpdateCategoryInput {
+  """分类颜色（十六进制）"""
+  color: String
+
+  """分类描述"""
+  description: String
+
+  """分类图标"""
+  icon: String
+
+  """分类名称"""
+  name: String
+
+  """排序权重"""
+  order: Int = 0
+
+  """父分类 ID"""
+  parentId: String
+
+  """URL 友好的唯一标识符"""
+  slug: String
 }
 
 input UpdateUserInput {

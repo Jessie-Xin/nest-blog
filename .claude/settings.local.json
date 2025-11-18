@@ -17,7 +17,14 @@
       "Bash(docker network:*)",
       "Bash(docker inspect:*)",
       "Bash(npm run docker:db:*)",
-      "Bash(npm run migrate:deploy:*)"
+      "Bash(npm run migrate:deploy:*)",
+      "Bash(npm run migrate:dev:create:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" npm run migrate:dev:create:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" npm run migrate:dev:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" npx prisma migrate status:*)",
+      "Bash(psql:*)",
+      "Bash(/Applications/Postgres.app/Contents/Versions/17/bin/psql:*)",
+      "Bash(npm run prisma:generate:*)"
     ],
     "deny": [],
     "ask": []

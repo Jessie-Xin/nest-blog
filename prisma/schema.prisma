@@ -33,11 +33,54 @@ model Post {
   published Boolean
   title     String
   content   String?
+
+  // 作者关系
   author    User?    @relation(fields: [authorId], references: [id])
   authorId  String?
+
+  // 分类关系（新增）
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?
+
+  @@index([categoryId])
 }
 
 enum Role {
   ADMIN
   USER
+}
+
+// ============================================
+// 分类系统（树形结构）
+// ============================================
+
+/// 分类模型 - 支持无限层级的树形结构
+model Category {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 基本信息
+  name        String  @db.VarChar(100)  // 分类名称
+  slug        String  @unique           // URL 友好的标识符（如：frontend）
+  description String? @db.Text          // 分类描述
+  icon        String?                   // 图标（可选）
+  color       String?                   // 颜色标识（如：#3B82F6）
+  order       Int     @default(0)       // 排序权重
+
+  // 树形结构：自引用关系
+  parentId String?                      // 父分类 ID（null 表示顶级分类）
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryTree")
+
+  // 关联的文章
+  posts Post[]
+
+  // 统计字段
+  postCount Int @default(0)  // 该分类下的文章数量
+
+  // 索引优化
+  @@index([slug])      // slug 用于 URL 查询，需要索引
+  @@index([parentId])  // 树形查询时经常用 parentId，需要索引
+  @@index([order])     // 排序时需要索引
 }
