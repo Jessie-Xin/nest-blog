@@ -82,8 +82,46 @@ input CreateCategoryInput {
 }
 
 input CreatePostInput {
+  """分类 ID"""
+  categoryId: String
+
+  """文章正文内容"""
   content: String!
+
+  """文章摘要（建议 150-200 字符）"""
+  excerpt: String
+
+  """SEO 元数据"""
+  meta: PostMetaInput
+
+  """发布时间（用于定时发布）"""
+  publishedAt: DateTime
+
+  """URL 友好标识符（slug）"""
+  slug: String
+
+  """文章状态（默认为 DRAFT）"""
+  status: PostStatus
+
+  """标签 ID 列表"""
+  tagIds: [String!]
+
+  """文章标题"""
   title: String!
+}
+
+input CreateTagInput {
+  """标签颜色（十六进制）"""
+  color: String
+
+  """标签描述"""
+  description: String
+
+  """标签名称"""
+  name: String!
+
+  """URL 友好的唯一标识符"""
+  slug: String!
 }
 
 """
@@ -102,19 +140,37 @@ input LoginInput {
 }
 
 type Mutation {
+  """为文章添加标签"""
+  addTagsToPost(postId: String!, tagIds: [String!]!): [Tag!]!
   changePassword(data: ChangePasswordInput!): User!
 
   """创建新分类"""
   createCategory(data: CreateCategoryInput!): Category!
   createPost(data: CreatePostInput!): Post!
 
+  """创建新标签"""
+  createTag(data: CreateTagInput!): Tag!
+
   """删除分类"""
   deleteCategory(
     """分类 ID"""
     id: String!
   ): Category!
+  deletePost: Post!
+
+  """删除标签"""
+  deleteTag(
+    """标签 ID"""
+    id: String!
+  ): Tag!
   login(data: LoginInput!): Auth!
   refreshToken(token: JWT!): Token!
+
+  """移除文章的标签"""
+  removeTagsFromPost(postId: String!, tagIds: [String!]!): [Tag!]!
+
+  """设置文章的标签（替换所有现有标签）"""
+  setPostTags(postId: String!, tagIds: [String!]!): [Tag!]!
   signup(data: SignupInput!): Auth!
 
   """更新分类"""
@@ -124,6 +180,15 @@ type Mutation {
     """分类 ID"""
     id: String!
   ): Category!
+  updatePost(data: UpdatePostInput!): Post!
+
+  """更新标签"""
+  updateTag(
+    data: UpdateTagInput!
+
+    """标签 ID"""
+    id: String!
+  ): Tag!
   updateUser(data: UpdateUserInput!): User!
 }
 
@@ -143,17 +208,48 @@ type PageInfo {
 }
 
 type Post {
+  """文章作者"""
   author: User
+
+  """所属分类"""
+  category: Category
+
+  """文章正文内容"""
   content: String
 
   """Identifies the date and time when the object was created."""
   createdAt: DateTime!
+
+  """文章摘要（建议 150-200 字符）"""
+  excerpt: String
   id: ID!
+
+  """SEO 元数据"""
+  meta: PostMeta
+
+  """是否发布（兼容旧字段）"""
   published: Boolean!
+
+  """发布时间（用于定时发布）"""
+  publishedAt: DateTime
+
+  """URL 友好标识符（slug）"""
+  slug: String!
+
+  """文章状态"""
+  status: PostStatus!
+
+  """关联的标签列表"""
+  tags: [Tag!]!
+
+  """文章标题"""
   title: String!
 
   """Identifies the date and time when the object was last updated."""
   updatedAt: DateTime!
+
+  """浏览次数"""
+  viewCount: Int!
 }
 
 type PostConnection {
@@ -165,6 +261,86 @@ type PostConnection {
 type PostEdge {
   cursor: String!
   node: Post!
+}
+
+type PostMeta {
+  """规范 URL"""
+  canonicalUrl: String
+
+  """Identifies the date and time when the object was created."""
+  createdAt: DateTime!
+  id: ID!
+
+  """SEO 描述（建议 150-160 字符）"""
+  metaDescription: String
+
+  """SEO 关键词（逗号分隔）"""
+  metaKeywords: String
+
+  """SEO 标题（建议 60-70 字符）"""
+  metaTitle: String
+
+  """Open Graph 描述"""
+  ogDescription: String
+
+  """Open Graph 图片 URL"""
+  ogImage: String
+
+  """Open Graph 标题"""
+  ogTitle: String
+
+  """文章 ID"""
+  postId: String!
+
+  """Twitter 卡片类型"""
+  twitterCard: String
+
+  """Twitter 描述"""
+  twitterDescription: String
+
+  """Twitter 图片 URL"""
+  twitterImage: String
+
+  """Twitter 标题"""
+  twitterTitle: String
+
+  """Identifies the date and time when the object was last updated."""
+  updatedAt: DateTime!
+}
+
+input PostMetaInput {
+  """规范 URL"""
+  canonicalUrl: String
+
+  """SEO 描述（建议 150-160 字符）"""
+  metaDescription: String
+
+  """SEO 关键词（逗号分隔）"""
+  metaKeywords: String
+
+  """SEO 标题（建议 60-70 字符）"""
+  metaTitle: String
+
+  """Open Graph 描述"""
+  ogDescription: String
+
+  """Open Graph 图片 URL"""
+  ogImage: String
+
+  """Open Graph 标题"""
+  ogTitle: String
+
+  """Twitter 卡片类型（summary、summary_large_image 等）"""
+  twitterCard: String
+
+  """Twitter 描述"""
+  twitterDescription: String
+
+  """Twitter 图片 URL"""
+  twitterImage: String
+
+  """Twitter 标题"""
+  twitterTitle: String
 }
 
 input PostOrder {
@@ -182,7 +358,27 @@ enum PostOrderField {
   updatedAt
 }
 
+"""文章状态"""
+enum PostStatus {
+  """已归档"""
+  ARCHIVED
+
+  """草稿"""
+  DRAFT
+
+  """已发布"""
+  PUBLISHED
+
+  """定时发布"""
+  SCHEDULED
+
+  """回收站"""
+  TRASH
+}
+
 type Query {
+  allPosts(orderBy: PostOrder, query: String, status: PostStatus): PostConnection!
+
   """获取所有分类列表"""
   categories: [Category!]!
 
@@ -210,7 +406,20 @@ type Query {
   helloWorld: String!
   me: User!
   post: Post!
+  postBySlug(slug: String!): Post
   publishedPosts(orderBy: PostOrder, query: String): PostConnection!
+
+  """根据 ID 获取单个标签"""
+  tag(
+    """标签 ID"""
+    id: String!
+  ): Tag!
+
+  """根据 slug 获取单个标签"""
+  tagBySlug(slug: String!): Tag!
+
+  """获取所有标签列表"""
+  tags: [Tag!]!
 
   """获取顶级分类列表"""
   topLevelCategories: [Category!]!
@@ -232,6 +441,33 @@ input SignupInput {
 
 type Subscription {
   postCreated: Post!
+}
+
+type Tag {
+  """标签颜色（十六进制）"""
+  color: String
+
+  """Identifies the date and time when the object was created."""
+  createdAt: DateTime!
+
+  """标签描述"""
+  description: String
+  id: ID!
+
+  """标签名称"""
+  name: String!
+
+  """该标签下的文章数量"""
+  postCount: Int!
+
+  """标签下的文章列表"""
+  posts: [Post]
+
+  """URL 友好的唯一标识符"""
+  slug: String!
+
+  """Identifies the date and time when the object was last updated."""
+  updatedAt: DateTime!
 }
 
 type Token {
@@ -260,6 +496,52 @@ input UpdateCategoryInput {
 
   """父分类 ID"""
   parentId: String
+
+  """URL 友好的唯一标识符"""
+  slug: String
+}
+
+input UpdatePostInput {
+  """分类 ID"""
+  categoryId: String
+
+  """文章正文内容"""
+  content: String
+
+  """文章摘要（建议 150-200 字符）"""
+  excerpt: String
+
+  """SEO 元数据"""
+  meta: PostMetaInput
+
+  """是否发布（兼容旧字段）"""
+  published: Boolean
+
+  """发布时间（用于定时发布）"""
+  publishedAt: DateTime
+
+  """URL 友好标识符（slug）"""
+  slug: String
+
+  """文章状态"""
+  status: PostStatus
+
+  """标签 ID 列表（会替换所有现有标签）"""
+  tagIds: [String!]
+
+  """文章标题"""
+  title: String
+}
+
+input UpdateTagInput {
+  """标签颜色（十六进制）"""
+  color: String
+
+  """标签描述"""
+  description: String
+
+  """标签名称"""
+  name: String
 
   """URL 友好的唯一标识符"""
   slug: String

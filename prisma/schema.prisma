@@ -30,24 +30,53 @@ model Post {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  published Boolean
-  title     String
-  content   String?
+
+  // 基本内容
+  title     String   @db.VarChar(255)  // 标题
+  slug      String   @unique @default(cuid())  // URL 友好标识符（先用默认值）
+  excerpt   String?  @db.VarChar(500)  // 摘要/简介
+  content   String?  @db.Text          // 正文内容
+
+  // 发布状态
+  published   Boolean    @default(false)     // 是否发布（兼容旧字段）
+  status      PostStatus @default(DRAFT)     // 文章状态
+  publishedAt DateTime?                      // 发布时间
 
   // 作者关系
   author    User?    @relation(fields: [authorId], references: [id])
   authorId  String?
 
-  // 分类关系（新增）
+  // 分类关系
   category   Category? @relation(fields: [categoryId], references: [id])
   categoryId String?
 
+  // 标签关系（多对多）
+  tags PostTag[]
+
+  // SEO 元数据（一对一）
+  meta PostMeta?
+
+  // 统计字段
+  viewCount Int @default(0)  // 浏览次数
+
   @@index([categoryId])
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
 }
 
 enum Role {
   ADMIN
   USER
+}
+
+/// 文章状态枚举
+enum PostStatus {
+  DRAFT           // 草稿
+  PUBLISHED       // 已发布
+  SCHEDULED       // 定时发布
+  ARCHIVED        // 已归档
+  TRASH           // 回收站
 }
 
 // ============================================
@@ -83,4 +112,85 @@ model Category {
   @@index([slug])      // slug 用于 URL 查询，需要索引
   @@index([parentId])  // 树形查询时经常用 parentId，需要索引
   @@index([order])     // 排序时需要索引
+}
+
+// ============================================
+// 标签系统（多对多关系）
+// ============================================
+
+/// 标签模型
+model Tag {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 基本信息
+  name        String  @unique @db.VarChar(50)  // 标签名称（唯一）
+  slug        String  @unique                  // URL 友好的标识符
+  description String? @db.VarChar(255)         // 标签描述
+  color       String?                          // 标签颜色（如：#10B981）
+
+  // 关联的文章（通过中间表）
+  posts PostTag[]
+
+  // 统计字段
+  postCount Int @default(0)  // 该标签下的文章数量
+
+  // 索引优化
+  @@index([slug])
+  @@index([name])
+}
+
+/// 文章-标签关联表（中间表）
+/// 实现 Post 和 Tag 的多对多关系
+model PostTag {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // 关联的文章
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // 关联的标签
+  tagId String
+  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  // 组合唯一约束：一篇文章不能重复添加同一个标签
+  @@unique([postId, tagId])
+
+  // 索引优化
+  @@index([postId])
+  @@index([tagId])
+}
+
+// ============================================
+// SEO 元数据系统
+// ============================================
+
+/// 文章 SEO 元数据
+/// 一对一关系：每篇文章最多有一条 SEO 元数据
+model PostMeta {
+  id     String @id @default(cuid())
+  postId String @unique
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // SEO 字段
+  metaTitle       String? @db.VarChar(70)   // SEO 标题（建议 60-70 字符）
+  metaDescription String? @db.VarChar(160)  // SEO 描述（建议 150-160 字符）
+  metaKeywords    String? @db.VarChar(255)  // 关键词
+  canonicalUrl    String?                   // 规范 URL
+  
+  // Open Graph（社交媒体分享）
+  ogTitle         String? @db.VarChar(95)   // Open Graph 标题
+  ogDescription   String? @db.VarChar(200)  // Open Graph 描述
+  ogImage         String?                   // Open Graph 图片 URL
+  
+  // Twitter Card
+  twitterCard     String? @default("summary_large_image")  // Twitter 卡片类型
+  twitterTitle    String? @db.VarChar(70)   // Twitter 标题
+  twitterDescription String? @db.VarChar(200) // Twitter 描述
+  twitterImage    String?                   // Twitter 图片 URL
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

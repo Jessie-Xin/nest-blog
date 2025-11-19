@@ -1,34 +1,32 @@
 import {
-  IsNotEmpty,
   IsOptional,
   MaxLength,
   IsEnum,
   IsArray,
+  IsBoolean,
 } from 'class-validator';
 import { InputType, Field } from '@nestjs/graphql';
 import { PostStatus } from '../models/post-status.enum';
 import { PostMetaInput } from './post-meta.input';
 
 /**
- * 创建文章输入数据
- * 定义创建文章时需要提供的完整信息
+ * 更新文章输入数据
+ * 所有字段都是可选的，允许部分更新
  */
 @InputType()
-export class CreatePostInput {
+export class UpdatePostInput {
   // ===== 基本内容字段 =====
 
   /**
    * 文章标题
-   * 必填字段
    */
-  @Field(() => String, { description: '文章标题' })
-  @IsNotEmpty()
+  @Field(() => String, { nullable: true, description: '文章标题' })
+  @IsOptional()
   @MaxLength(255)
-  title: string;
+  title?: string;
 
   /**
    * URL 友好标识符
-   * 可选，如果不提供将自动生成
    */
   @Field(() => String, {
     nullable: true,
@@ -40,7 +38,6 @@ export class CreatePostInput {
 
   /**
    * 文章摘要
-   * 可选，建议 150-200 字符
    */
   @Field(() => String, {
     nullable: true,
@@ -52,21 +49,30 @@ export class CreatePostInput {
 
   /**
    * 文章内容
-   * 必填字段，包含文章的详细内容
    */
-  @Field(() => String, { description: '文章正文内容' })
-  @IsNotEmpty()
-  content: string;
+  @Field(() => String, { nullable: true, description: '文章正文内容' })
+  @IsOptional()
+  content?: string;
 
   // ===== 发布状态字段 =====
 
   /**
+   * 发布状态（兼容旧字段）
+   */
+  @Field(() => Boolean, {
+    nullable: true,
+    description: '是否发布（兼容旧字段）',
+  })
+  @IsOptional()
+  @IsBoolean()
+  published?: boolean;
+
+  /**
    * 文章状态
-   * 默认为 DRAFT（草稿）
    */
   @Field(() => PostStatus, {
     nullable: true,
-    description: '文章状态（默认为 DRAFT）',
+    description: '文章状态',
   })
   @IsOptional()
   @IsEnum(PostStatus)
@@ -74,7 +80,6 @@ export class CreatePostInput {
 
   /**
    * 发布时间
-   * 可用于定时发布
    */
   @Field(() => Date, {
     nullable: true,
@@ -87,7 +92,6 @@ export class CreatePostInput {
 
   /**
    * 分类 ID
-   * 文章所属的分类
    */
   @Field(() => String, {
     nullable: true,
@@ -98,11 +102,11 @@ export class CreatePostInput {
 
   /**
    * 标签 ID 列表
-   * 文章关联的标签
+   * 注意：这会替换所有现有标签
    */
   @Field(() => [String], {
     nullable: true,
-    description: '标签 ID 列表',
+    description: '标签 ID 列表（会替换所有现有标签）',
   })
   @IsOptional()
   @IsArray()
@@ -110,7 +114,6 @@ export class CreatePostInput {
 
   /**
    * SEO 元数据
-   * 可选的 SEO 信息
    */
   @Field(() => PostMetaInput, {
     nullable: true,

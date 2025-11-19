@@ -21,6 +21,12 @@ import { Post } from './models/post.model';
 import { PostConnection } from './models/post-connection.model';
 import { PostOrder } from './dto/post-order.input';
 import { CreatePostInput } from './dto/createPost.input';
+import { UpdatePostInput } from './dto/updatePost.input';
+import { PostStatus } from './models/post-status.enum';
+import { PostMeta } from './models/post-meta.model';
+import { Category } from '../categories/models/category.model';
+import { Tag } from '../tags/models/tag.model';
+import { PostsService } from './posts.service';
 
 // GraphQL 订阅发布器，用于发布文章创建事件
 const pubSub = new PubSub();
@@ -31,7 +37,10 @@ const pubSub = new PubSub();
  */
 @Resolver(() => Post)
 export class PostsResolver {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private postsService: PostsService,
+  ) {}
 
   /**
    * 文章创建订阅
@@ -56,17 +65,38 @@ export class PostsResolver {
     @UserEntity() user: User,
     @Args('data') data: CreatePostInput,
   ) {
-    const newPost = this.prisma.post.create({
-      data: {
-        published: true, // 新创建的文章默认为已发布状态
-        title: data.title, // 文章标题
-        content: data.content, // 文章内容
-        authorId: user.id, // 文章作者ID
-      },
-    });
+    const newPost = await this.postsService.createPost(data, user.id);
+
     // 发布文章创建事件
     pubSub.publish('postCreated', { postCreated: newPost });
+
     return newPost;
+  }
+
+  /**
+   * 更新文章
+   * 需要用户认证
+   * @param id 文章ID
+   * @param data 更新文章的输入数据
+   * @returns 更新后的文章对象
+   */
+  @UseGuards(GqlAuthGuard)
+  @Mutation(() => Post)
+  async updatePost(
+    @Args() id: PostIdArgs,
+    @Args('data') data: UpdatePostInput,
+  ) {
+    return this.postsService.updatePost(id.postId, data);
+  }
+
+  /**
+   * 删除文章
+   * 需要用户认证
+   */
+  @UseGuards(GqlAuthGuard)
+  @Mutation(() => Post)
+  async deletePost(@Args() id: PostIdArgs) {
+    return this.postsService.deletePost(id.postId);
   }
 
   /**
@@ -123,17 +153,7 @@ export class PostsResolver {
    */
   @Query(() => [Post])
   userPosts(@Args() id: UserIdArgs) {
-    return this.prisma.user
-      .findUnique({ where: { id: id.userId } })
-      .posts({ where: { published: true } }); // 只返回已发布的文章
-
-    // 或者使用以下方法：
-    // return this.prisma.posts.findMany({
-    //   where: {
-    //     published: true,
-    //     author: { id: id.userId }
-    //   }
-    // });
+    return this.postsService.findUserPosts(id.userId);
   }
 
   /**
@@ -144,7 +164,56 @@ export class PostsResolver {
    */
   @Query(() => Post)
   async post(@Args() id: PostIdArgs) {
-    return this.prisma.post.findUnique({ where: { id: id.postId } });
+    return this.postsService.findOne(id.postId);
+  }
+
+  /**
+   * 根据 slug 查询文章
+   */
+  @Query(() => Post, { nullable: true })
+  async postBySlug(@Args('slug') slug: string) {
+    return this.postsService.findBySlug(slug);
+  }
+
+  /**
+   * 查询所有文章（包括草稿）
+   * 需要认证，管理员使用
+   */
+  @UseGuards(GqlAuthGuard)
+  @Query(() => PostConnection)
+  async allPosts(
+    @Args() { after, before, first, last }: PaginationArgs,
+    @Args({ name: 'query', type: () => String, nullable: true })
+    query: string,
+    @Args({ name: 'status', type: () => PostStatus, nullable: true })
+    status: PostStatus,
+    @Args({
+      name: 'orderBy',
+      type: () => PostOrder,
+      nullable: true,
+    })
+    orderBy: PostOrder,
+  ) {
+    return findManyCursorConnection(
+      (args) =>
+        this.prisma.post.findMany({
+          include: { author: true },
+          where: {
+            status: status || undefined,
+            title: { contains: query || '' },
+          },
+          orderBy: orderBy ? { [orderBy.field]: orderBy.direction } : undefined,
+          ...args,
+        }),
+      () =>
+        this.prisma.post.count({
+          where: {
+            status: status || undefined,
+            title: { contains: query || '' },
+          },
+        }),
+      { first, last, before, after },
+    );
   }
 
   /**
@@ -156,5 +225,38 @@ export class PostsResolver {
   @ResolveField('author', () => User)
   async author(@Parent() post: Post) {
     return this.prisma.post.findUnique({ where: { id: post.id } }).author();
+  }
+
+  /**
+   * 解析文章的分类字段
+   */
+  @ResolveField('category', () => Category, { nullable: true })
+  async category(@Parent() post: Post) {
+    if (!post.categoryId) return null;
+    return this.prisma.category.findUnique({
+      where: { id: post.categoryId },
+    });
+  }
+
+  /**
+   * 解析文章的标签字段
+   */
+  @ResolveField('tags', () => [Tag])
+  async tags(@Parent() post: Post) {
+    const postTags = await this.prisma.postTag.findMany({
+      where: { postId: post.id },
+      include: { tag: true },
+    });
+    return postTags.map((pt) => pt.tag);
+  }
+
+  /**
+   * 解析文章的 SEO 元数据字段
+   */
+  @ResolveField('meta', () => PostMeta, { nullable: true })
+  async meta(@Parent() post: Post) {
+    return this.prisma.postMeta.findUnique({
+      where: { postId: post.id },
+    });
   }
 }
