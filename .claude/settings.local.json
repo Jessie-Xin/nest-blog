@@ -30,7 +30,11 @@
       "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" npx prisma migrate dev:*)",
       "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" npx prisma db push:*)",
       "Bash(npm run start:dev:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(npm install:*)",
+      "Bash(python3:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" npm run start:dev:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" npm run seed:*)"
     ],
     "deny": [],
     "ask": []

@@ -24,6 +24,7 @@ model User {
   lastname  String?
   posts     Post[]
   role      Role
+  media     Media[]  // 用户上传的媒体文件
 }
 
 model Post {
@@ -193,4 +194,55 @@ model PostMeta {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// 媒体库系统
+// ============================================
+
+/// 媒体类型枚举
+enum MediaType {
+  IMAGE       // 图片
+  VIDEO       // 视频
+  AUDIO       // 音频
+  DOCUMENT    // 文档
+  OTHER       // 其他
+}
+
+/// 媒体文件模型
+/// 存储上传的图片、视频、文档等文件
+model Media {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 基本信息
+  filename     String  @db.VarChar(255)  // 原始文件名
+  title        String? @db.VarChar(255)  // 媒体标题（用户可自定义）
+  description  String? @db.Text          // 媒体描述
+  altText      String? @db.VarChar(255)  // 图片 alt 文本（SEO）
+
+  // 文件信息
+  type         MediaType                 // 媒体类型
+  mimeType     String  @db.VarChar(100)  // MIME 类型（如：image/jpeg）
+  size         Int                        // 文件大小（字节）
+  path         String  @db.VarChar(500)  // 文件存储路径
+  url          String  @db.VarChar(500)  // 访问 URL
+
+  // 图片特定信息（仅 IMAGE 类型）
+  width        Int?                       // 图片宽度
+  height       Int?                       // 图片高度
+  thumbnailUrl String? @db.VarChar(500)  // 缩略图 URL
+
+  // 上传者信息
+  uploaderId String
+  uploader   User   @relation(fields: [uploaderId], references: [id])
+
+  // 元数据（可扩展）
+  metadata Json?  // 存储额外的元数据（如：EXIF、视频时长等）
+
+  // 索引优化
+  @@index([uploaderId])
+  @@index([type])
+  @@index([createdAt])
 }

@@ -9,9 +9,16 @@ import type {
   NestConfig,
   SwaggerConfig,
 } from './common/configs/config.interface';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // 配置静态文件服务 - 提供上传文件的访问
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads/',
+  });
 
   // Validation
   app.useGlobalPipes(new ValidationPipe());
@@ -35,6 +42,7 @@ async function bootstrap() {
       .setDescription(swaggerConfig.description || 'The nestjs API description')
       .setVersion(swaggerConfig.version || '1.0')
       .addTag('健康检查', '应用健康检查相关接口')
+      .addTag('媒体上传', '文件上传相关接口')
       .addBearerAuth(
         {
           type: 'http',
@@ -70,6 +78,7 @@ async function bootstrap() {
       `📚 Swagger 文档: http://localhost:${port}/${swaggerConfig.path || 'api'}`,
     );
   }
+  console.log(`📁 媒体文件: http://localhost:${port}/uploads/`);
   console.log('');
 }
 bootstrap();

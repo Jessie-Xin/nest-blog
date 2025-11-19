@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { PostsModule } from './posts/posts.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TagsModule } from './tags/tags.module';
+import { MediaModule } from './media/media.module';
 import config from './common/configs/config';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GqlConfigService } from './gql-config.service';
@@ -36,7 +37,8 @@ import { GqlConfigService } from './gql-config.service';
     UsersModule,
     PostsModule,
     CategoriesModule,
-    TagsModule, // 新增标签模块
+    TagsModule,
+    MediaModule, // 新增媒体模块
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],
