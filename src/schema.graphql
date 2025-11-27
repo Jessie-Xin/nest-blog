@@ -58,6 +58,51 @@ input ChangePasswordInput {
   oldPassword: String!
 }
 
+type Comment {
+  """评论作者"""
+  author: User!
+
+  """评论内容"""
+  content: String!
+
+  """Identifies the date and time when the object was created."""
+  createdAt: DateTime!
+  id: ID!
+
+  """点赞数"""
+  likes: Int!
+
+  """父评论（嵌套回复时）"""
+  parent: Comment
+
+  """所属文章"""
+  post: Post!
+
+  """子评论列表"""
+  replies: [Comment!]!
+
+  """评论状态"""
+  status: CommentStatus!
+
+  """Identifies the date and time when the object was last updated."""
+  updatedAt: DateTime!
+}
+
+"""评论状态"""
+enum CommentStatus {
+  """已批准"""
+  APPROVED
+
+  """待审核"""
+  PENDING
+
+  """已拒绝"""
+  REJECTED
+
+  """垃圾评论"""
+  SPAM
+}
+
 input CreateCategoryInput {
   """分类颜色（十六进制）"""
   color: String
@@ -79,6 +124,17 @@ input CreateCategoryInput {
 
   """URL 友好的唯一标识符"""
   slug: String!
+}
+
+input CreateCommentInput {
+  """评论内容"""
+  content: String!
+
+  """父评论 ID（回复评论时使用）"""
+  parentId: String
+
+  """所属文章 ID"""
+  postId: String!
 }
 
 input CreatePostInput {
@@ -231,6 +287,9 @@ type Mutation {
 
   """创建新分类"""
   createCategory(data: CreateCategoryInput!): Category!
+
+  """创建评论"""
+  createComment(data: CreateCommentInput!): Comment!
   createPost(data: CreatePostInput!): Post!
 
   """创建新标签"""
@@ -241,6 +300,12 @@ type Mutation {
     """分类 ID"""
     id: String!
   ): Category!
+
+  """删除评论"""
+  deleteComment(
+    """评论 ID"""
+    commentId: String!
+  ): Comment!
 
   """删除媒体文件"""
   deleteMedia(
@@ -254,6 +319,12 @@ type Mutation {
     """标签 ID"""
     id: String!
   ): Tag!
+
+  """点赞评论"""
+  likeComment(
+    """评论 ID"""
+    commentId: String!
+  ): Comment!
   login(data: LoginInput!): Auth!
   refreshToken(token: JWT!): Token!
 
@@ -264,6 +335,12 @@ type Mutation {
   setPostTags(postId: String!, tagIds: [String!]!): [Tag!]!
   signup(data: SignupInput!): Auth!
 
+  """取消点赞评论"""
+  unlikeComment(
+    """评论 ID"""
+    commentId: String!
+  ): Comment!
+
   """更新分类"""
   updateCategory(
     data: UpdateCategoryInput!
@@ -271,6 +348,20 @@ type Mutation {
     """分类 ID"""
     id: String!
   ): Category!
+
+  """更新评论内容"""
+  updateComment(
+    """评论 ID"""
+    commentId: String!
+    data: UpdateCommentInput!
+  ): Comment!
+
+  """更新评论状态（管理员专用）"""
+  updateCommentStatus(
+    """评论 ID"""
+    commentId: String!
+    data: UpdateCommentStatusInput!
+  ): Comment!
 
   """更新媒体信息"""
   updateMedia(
@@ -501,6 +592,15 @@ type Query {
     """分类 ID"""
     id: String!
   ): [Category!]!
+
+  """查询单个评论"""
+  comment(
+    """评论 ID"""
+    commentId: String!
+  ): Comment!
+
+  """查询所有评论"""
+  comments(authorId: String, postId: String, status: CommentStatus): [Comment!]!
   hello(name: String!): String!
   helloWorld: String!
   me: User!
@@ -518,6 +618,9 @@ type Query {
   myMediaStats: MediaStats!
   post: Post!
   postBySlug(slug: String!): Post
+
+  """查询某篇文章的评论（树形结构）"""
+  postComments(postId: String!, status: CommentStatus): [Comment!]!
   publishedPosts(orderBy: PostOrder, query: String): PostConnection!
 
   """根据 ID 获取单个标签"""
@@ -618,6 +721,16 @@ input UpdateCategoryInput {
 
   """URL 友好的唯一标识符"""
   slug: String
+}
+
+input UpdateCommentInput {
+  """评论内容"""
+  content: String!
+}
+
+input UpdateCommentStatusInput {
+  """评论状态"""
+  status: CommentStatus!
 }
 
 input UpdateMediaInput {

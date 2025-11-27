@@ -11,6 +11,7 @@ import { PostsModule } from './posts/posts.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TagsModule } from './tags/tags.module';
 import { MediaModule } from './media/media.module';
+import { CommentsModule } from './comments/comments.module';
 import config from './common/configs/config';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GqlConfigService } from './gql-config.service';
@@ -39,6 +40,7 @@ import { GqlConfigService } from './gql-config.service';
     CategoriesModule,
     TagsModule,
     MediaModule, // 新增媒体模块
+    CommentsModule, // 新增评论模块
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],

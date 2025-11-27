@@ -24,7 +24,8 @@ model User {
   lastname  String?
   posts     Post[]
   role      Role
-  media     Media[]  // 用户上传的媒体文件
+  media     Media[]     // 用户上传的媒体文件
+  comments  Comment[]   // 用户发表的评论
 }
 
 model Post {
@@ -56,6 +57,9 @@ model Post {
 
   // SEO 元数据（一对一）
   meta PostMeta?
+
+  // 评论关系
+  comments Comment[]
 
   // 统计字段
   viewCount Int @default(0)  // 浏览次数
@@ -245,4 +249,53 @@ model Media {
   @@index([uploaderId])
   @@index([type])
   @@index([createdAt])
+}
+
+// ============================================
+// 评论系统
+// ============================================
+
+/// 评论状态枚举
+enum CommentStatus {
+  PENDING     // 待审核
+  APPROVED    // 已批准
+  REJECTED    // 已拒绝
+  SPAM        // 垃圾评论
+}
+
+/// 评论模型
+/// 支持嵌套回复（树形结构）和审核功能
+model Comment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 评论内容
+  content String @db.Text  // 评论正文
+
+  // 关联的文章
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // 评论作者
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  // 树形结构：嵌套回复（自引用关系）
+  parentId String?                           // 父评论 ID（null 表示顶级评论）
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+
+  // 审核状态
+  status CommentStatus @default(PENDING)  // 默认待审核
+
+  // 互动统计
+  likes Int @default(0)  // 点赞数
+
+  // 索引优化
+  @@index([postId])     // 查询文章评论时需要
+  @@index([authorId])   // 查询用户评论时需要
+  @@index([parentId])   // 查询嵌套回复时需要
+  @@index([status])     // 筛选审核状态时需要
+  @@index([createdAt])  // 按时间排序时需要
 }
