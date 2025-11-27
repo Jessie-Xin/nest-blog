@@ -166,6 +166,14 @@ input CreatePostInput {
   title: String!
 }
 
+input CreateRevisionInput {
+  """变更说明"""
+  changeMessage: String
+
+  """文章 ID"""
+  postId: String!
+}
+
 input CreateTagInput {
   """标签颜色（十六进制）"""
   color: String
@@ -295,6 +303,9 @@ type Mutation {
   createComment(data: CreateCommentInput!): Comment!
   createPost(data: CreatePostInput!): Post!
 
+  """创建版本快照"""
+  createRevision(data: CreateRevisionInput!): PostRevision!
+
   """创建新标签"""
   createTag(data: CreateTagInput!): Tag!
 
@@ -317,6 +328,12 @@ type Mutation {
   ): Media!
   deletePost: Post!
 
+  """删除指定版本（仅管理员）"""
+  deleteRevision(
+    """版本 ID"""
+    revisionId: String!
+  ): PostRevision!
+
   """删除标签"""
   deleteTag(
     """标签 ID"""
@@ -333,6 +350,15 @@ type Mutation {
 
   """移除文章的标签"""
   removeTagsFromPost(postId: String!, tagIds: [String!]!): [Tag!]!
+
+  """恢复到指定版本"""
+  restoreRevision(
+    """文章 ID"""
+    postId: String!
+
+    """要恢复的版本号"""
+    version: Int!
+  ): Post!
 
   """设置文章的标签（替换所有现有标签）"""
   setPostTags(postId: String!, tagIds: [String!]!): [Tag!]!
@@ -562,6 +588,57 @@ enum PostOrderField {
   updatedAt
 }
 
+type PostRevision {
+  """分类 ID 快照"""
+  categoryId: String
+
+  """变更说明"""
+  changeMessage: String
+
+  """内容快照"""
+  content: String
+
+  """Identifies the date and time when the object was created."""
+  createdAt: DateTime!
+
+  """版本创建者"""
+  createdBy: User!
+
+  """摘要快照"""
+  excerpt: String
+  id: ID!
+
+  """SEO 元数据快照"""
+  metaData: JSON
+
+  """所属文章"""
+  post: Post!
+
+  """发布状态快照"""
+  published: Boolean!
+
+  """发布时间快照"""
+  publishedAt: DateTime
+
+  """Slug 快照"""
+  slug: String!
+
+  """状态快照"""
+  status: PostStatus!
+
+  """标签 ID 数组快照"""
+  tagIds: [String!]!
+
+  """标题快照"""
+  title: String!
+
+  """Identifies the date and time when the object was last updated."""
+  updatedAt: DateTime!
+
+  """版本号"""
+  version: Int!
+}
+
 """文章状态"""
 enum PostStatus {
   """已归档"""
@@ -615,6 +692,18 @@ type Query {
 
   """查询所有评论"""
   comments(authorId: String, postId: String, status: CommentStatus): [Comment!]!
+
+  """对比两个版本"""
+  compareRevisions(
+    """新版本号"""
+    newVersion: Int!
+
+    """旧版本号"""
+    oldVersion: Int!
+
+    """文章 ID"""
+    postId: String!
+  ): RevisionDiff!
   hello(name: String!): String!
   helloWorld: String!
   me: User!
@@ -641,7 +730,16 @@ type Query {
 
   """查询某篇文章的评论（树形结构）"""
   postComments(postId: String!, status: CommentStatus): [Comment!]!
+
+  """查询文章的所有版本历史"""
+  postRevisions(postId: String!): [PostRevision!]!
   publishedPosts(orderBy: PostOrder, query: String): PostConnection!
+
+  """查询单个版本"""
+  revision(
+    """版本 ID"""
+    revisionId: String!
+  ): PostRevision!
 
   """搜索文章"""
   search(data: SearchInput!): SearchResult!
@@ -664,6 +762,32 @@ type Query {
   """获取顶级分类列表"""
   topLevelCategories: [Category!]!
   userPosts: [Post!]!
+}
+
+type RevisionDiff {
+  """分类是否变更"""
+  categoryChanged: Boolean!
+
+  """变更摘要列表"""
+  changes: [String!]!
+
+  """内容是否变更"""
+  contentChanged: Boolean!
+
+  """新版本"""
+  newRevision: PostRevision!
+
+  """旧版本"""
+  oldRevision: PostRevision!
+
+  """状态是否变更"""
+  statusChanged: Boolean!
+
+  """标签是否变更"""
+  tagsChanged: Boolean!
+
+  """标题是否变更"""
+  titleChanged: Boolean!
 }
 
 """User role"""

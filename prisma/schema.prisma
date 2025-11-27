@@ -24,9 +24,10 @@ model User {
   lastname      String?
   posts         Post[]
   role          Role
-  media         Media[] // 用户上传的媒体文件
-  comments      Comment[] // 用户发表的评论
+  media         Media[]         // 用户上传的媒体文件
+  comments      Comment[]       // 用户发表的评论
   searchHistory SearchHistory[] // 用户的搜索历史
+  postRevisions PostRevision[]  // 用户创建的文章版本
 }
 
 model Post {
@@ -62,8 +63,11 @@ model Post {
   // 评论关系
   comments Comment[]
 
+  // 版本历史
+  revisions PostRevision[]
+
   // 统计字段
-  viewCount Int @default(0) // 浏览次数
+  viewCount Int @default(0)  // 浏览次数
 
   @@index([categoryId])
   @@index([slug])
@@ -324,7 +328,56 @@ model SearchHistory {
   source String? @db.VarChar(50) // 搜索来源：web、mobile、api 等
 
   // 索引优化
-  @@index([query]) // 搜索建议时需要
+  @@index([query]) // 搜索建议时需���
   @@index([userId]) // 查询用户搜索历史时需要
   @@index([createdAt]) // 按时间统计时需要
+}
+
+// ============================================
+// 版本历史系统
+// ============================================
+
+/// 文章版本历史模型
+/// 存储文章的历史快照，支持版本对比和回滚
+model PostRevision {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // 关联的文章
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // 版本号（自增，从 1 开始）
+  version Int
+
+  // 快照内容（完整的文章数据）
+  title     String   @db.VarChar(255)
+  slug      String
+  excerpt   String?  @db.VarChar(500)
+  content   String?  @db.Text
+  status    PostStatus
+  published Boolean
+  publishedAt DateTime?
+
+  // 分类和标签快照（存储 ID，用于恢复）
+  categoryId String?
+  tagIds     String[] // 标签 ID 数组
+
+  // SEO 元数据快照（JSON 格式）
+  metaData Json?
+
+  // 版本创建者
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  // 变更说明
+  changeMessage String? @db.VarChar(500)
+
+  // 组合唯一约束：一篇文章的版本号唯一
+  @@unique([postId, version])
+
+  // 索引优化
+  @@index([postId])
+  @@index([createdById])
+  @@index([createdAt])
 }
