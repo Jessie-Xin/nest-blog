@@ -2,6 +2,74 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type ApprovalAction {
+  """操作类型"""
+  actionType: ApprovalActionType!
+
+  """审批人（通常是管理员或编辑）"""
+  approver: User!
+
+  """审批人 ID"""
+  approverId: String!
+
+  """审批意见/评论"""
+  comment: String
+
+  """Identifies the date and time when the object was created."""
+  createdAt: DateTime!
+  id: ID!
+
+  """关联的审批请求 ID"""
+  requestId: String!
+
+  """Identifies the date and time when the object was last updated."""
+  updatedAt: DateTime!
+}
+
+"""审批操作类型"""
+enum ApprovalActionType {
+  APPROVE
+  COMMENT
+  REJECT
+}
+
+type ApprovalRequest {
+  actions: [ApprovalAction!]!
+
+  """Identifies the date and time when the object was created."""
+  createdAt: DateTime!
+  id: ID!
+
+  """关联的文章"""
+  post: Post!
+
+  """关联的文章 ID"""
+  postId: String!
+
+  """请求说明"""
+  requestMessage: String
+
+  """请求人（通常是文章作者）"""
+  requester: User!
+
+  """请求人 ID"""
+  requesterId: String!
+
+  """审批状态"""
+  status: ApprovalStatus!
+
+  """Identifies the date and time when the object was last updated."""
+  updatedAt: DateTime!
+}
+
+"""审批状态"""
+enum ApprovalStatus {
+  APPROVED
+  CANCELLED
+  PENDING
+  REJECTED
+}
+
 type Auth {
   """JWT access token"""
   accessToken: JWT!
@@ -101,6 +169,14 @@ enum CommentStatus {
 
   """垃圾评论"""
   SPAM
+}
+
+input CreateApprovalRequestInput {
+  """需要审批的文章 ID"""
+  postId: String!
+
+  """请求说明"""
+  requestMessage: String
 }
 
 input CreateCategoryInput {
@@ -289,12 +365,27 @@ enum MediaType {
 }
 
 type Mutation {
+  """添加审批评论（管理员）"""
+  addApprovalComment(data: ProcessApprovalInput!): ApprovalAction!
+
   """为文章添加标签"""
   addTagsToPost(postId: String!, tagIds: [String!]!): [Tag!]!
+
+  """批准审批请求（管理员）"""
+  approveRequest(data: ProcessApprovalInput!): ApprovalRequest!
+
+  """取消审批请求"""
+  cancelApprovalRequest(
+    """审批请求 ID"""
+    requestId: String!
+  ): ApprovalRequest!
   changePassword(data: ChangePasswordInput!): User!
 
   """清空用户搜索历史"""
   clearMySearchHistory: Boolean!
+
+  """创建审批请求"""
+  createApprovalRequest(data: CreateApprovalRequestInput!): ApprovalRequest!
 
   """创建新分类"""
   createCategory(data: CreateCategoryInput!): Category!
@@ -347,6 +438,9 @@ type Mutation {
   ): Comment!
   login(data: LoginInput!): Auth!
   refreshToken(token: JWT!): Token!
+
+  """拒绝审批请求（管理员）"""
+  rejectRequest(data: ProcessApprovalInput!): ApprovalRequest!
 
   """移除文章的标签"""
   removeTagsFromPost(postId: String!, tagIds: [String!]!): [Tag!]!
@@ -657,8 +751,28 @@ enum PostStatus {
   TRASH
 }
 
+input ProcessApprovalInput {
+  """审批意见/评论"""
+  comment: String
+
+  """审批请求 ID"""
+  requestId: String!
+}
+
 type Query {
   allPosts(orderBy: PostOrder, query: String, status: PostStatus): PostConnection!
+
+  """查询单个审批请求"""
+  approvalRequest(
+    """审批请求 ID"""
+    requestId: String!
+  ): ApprovalRequest!
+
+  """通过文章 ID 查询审批请求"""
+  approvalRequestByPost(
+    """文章 ID"""
+    postId: String!
+  ): ApprovalRequest
 
   """获取所有分类列表"""
   categories: [Category!]!
@@ -717,11 +831,17 @@ type Query {
   """查询所有媒体文件"""
   mediaFiles(onlyMine: Boolean, type: MediaType): [Media!]!
 
+  """查询当前用户的所有审批请求"""
+  myApprovalRequests: [ApprovalRequest!]!
+
   """获取用户的媒体统计"""
   myMediaStats: MediaStats!
 
   """获取用户搜索历史"""
   mySearchHistory(limit: Int = 20): [SearchResult!]! @deprecated(reason: "返回类型待优化")
+
+  """查询所有待审批的请求（管理员）"""
+  pendingApprovalRequests: [ApprovalRequest!]!
 
   """获取热门搜索"""
   popularSearches(days: Int = 7, limit: Int = 10): [PopularSearch!]!

@@ -14,6 +14,7 @@ import { MediaModule } from './media/media.module';
 import { CommentsModule } from './comments/comments.module';
 import { SearchModule } from './search/search.module';
 import { RevisionsModule } from './revisions/revisions.module';
+import { ApprovalsModule } from './approvals/approvals.module';
 import config from './common/configs/config';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GqlConfigService } from './gql-config.service';
@@ -45,6 +46,7 @@ import { GqlConfigService } from './gql-config.service';
     CommentsModule, // 新增评论模块
     SearchModule, // 新增搜索模块
     RevisionsModule, // 新增版本历史模块
+    ApprovalsModule, // 新增审批工作流模块
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],

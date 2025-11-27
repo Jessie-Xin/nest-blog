@@ -24,10 +24,12 @@ model User {
   lastname      String?
   posts         Post[]
   role          Role
-  media         Media[]         // 用户上传的媒体文件
-  comments      Comment[]       // 用户发表的评论
-  searchHistory SearchHistory[] // 用户的搜索历史
-  postRevisions PostRevision[]  // 用户创建的文章版本
+  media            Media[]            // 用户上传的媒体文件
+  comments         Comment[]          // 用户发表的评论
+  searchHistory    SearchHistory[]    // 用户的搜索历史
+  postRevisions    PostRevision[]     // 用户创建的文章版本
+  approvalRequests ApprovalRequest[]  @relation("ApprovalRequester") // 用户发起的审批请求
+  approvalActions  ApprovalAction[]   @relation("ApprovalApprover") // 用户执行的审批操作
 }
 
 model Post {
@@ -66,8 +68,11 @@ model Post {
   // 版本历史
   revisions PostRevision[]
 
+  // 审批请求（一对一）
+  approvalRequest ApprovalRequest?
+
   // 统计字段
-  viewCount Int @default(0)  // 浏览次数
+  viewCount Int @default(0) // 浏览次数
 
   @@index([categoryId])
   @@index([slug])
@@ -379,5 +384,81 @@ model PostRevision {
   // 索引优化
   @@index([postId])
   @@index([createdById])
+  @@index([createdAt])
+}
+
+// ============================================
+// 审批工作流系统
+// ============================================
+
+/// 审批状态枚举
+enum ApprovalStatus {
+  PENDING   // 待审批
+  APPROVED  // 已批准
+  REJECTED  // 已拒绝
+  CANCELLED // 已取消
+}
+
+/// 审批操作类型枚举
+enum ApprovalActionType {
+  APPROVE // 批准
+  REJECT  // 拒绝
+  COMMENT // 评论（不改变状态）
+}
+
+/// 审批请求模型
+/// 用于管理文章的审批流程
+model ApprovalRequest {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联的文章
+  postId String @unique // 一篇文章同时只能有一个审批请求
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // 请求人（通常是文章作者）
+  requesterId String
+  requester   User   @relation("ApprovalRequester", fields: [requesterId], references: [id])
+
+  // 审批状态
+  status ApprovalStatus @default(PENDING)
+
+  // 请求说明
+  requestMessage String? @db.Text
+
+  // 审批操作记录
+  actions ApprovalAction[]
+
+  // 索引优化
+  @@index([postId])
+  @@index([requesterId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// 审批操作记录模型
+/// 记录每次审批操作（批准、拒绝、评论）
+model ApprovalAction {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // 关联的审批请求
+  requestId String
+  request   ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  // 审批人（通常是管理员或编辑）
+  approverId String
+  approver   User   @relation("ApprovalApprover", fields: [approverId], references: [id])
+
+  // 操作类型
+  actionType ApprovalActionType
+
+  // 审批意见/评论
+  comment String? @db.Text
+
+  // 索引优化
+  @@index([requestId])
+  @@index([approverId])
   @@index([createdAt])
 }
