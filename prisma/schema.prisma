@@ -15,17 +15,18 @@ generator client {
 // }
 
 model User {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  email     String   @unique
-  password  String
-  firstname String?
-  lastname  String?
-  posts     Post[]
-  role      Role
-  media     Media[]     // 用户上传的媒体文件
-  comments  Comment[]   // 用户发表的评论
+  id            String          @id @default(cuid())
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  email         String          @unique
+  password      String
+  firstname     String?
+  lastname      String?
+  posts         Post[]
+  role          Role
+  media         Media[] // 用户上传的媒体文件
+  comments      Comment[] // 用户发表的评论
+  searchHistory SearchHistory[] // 用户的搜索历史
 }
 
 model Post {
@@ -34,19 +35,19 @@ model Post {
   updatedAt DateTime @updatedAt
 
   // 基本内容
-  title     String   @db.VarChar(255)  // 标题
-  slug      String   @unique @default(cuid())  // URL 友好标识符（先用默认值）
-  excerpt   String?  @db.VarChar(500)  // 摘要/简介
-  content   String?  @db.Text          // 正文内容
+  title   String  @db.VarChar(255) // 标题
+  slug    String  @unique @default(cuid()) // URL 友好标识符（先用默认值）
+  excerpt String? @db.VarChar(500) // 摘要/简介
+  content String? @db.Text // 正文内容
 
   // 发布状态
-  published   Boolean    @default(false)     // 是否发布（兼容旧字段）
-  status      PostStatus @default(DRAFT)     // 文章状态
-  publishedAt DateTime?                      // 发布时间
+  published   Boolean    @default(false) // 是否发布（兼容旧字段）
+  status      PostStatus @default(DRAFT) // 文章状态
+  publishedAt DateTime? // 发布时间
 
   // 作者关系
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  String?
+  author   User?   @relation(fields: [authorId], references: [id])
+  authorId String?
 
   // 分类关系
   category   Category? @relation(fields: [categoryId], references: [id])
@@ -62,7 +63,7 @@ model Post {
   comments Comment[]
 
   // 统计字段
-  viewCount Int @default(0)  // 浏览次数
+  viewCount Int @default(0) // 浏览次数
 
   @@index([categoryId])
   @@index([slug])
@@ -77,11 +78,11 @@ enum Role {
 
 /// 文章状态枚举
 enum PostStatus {
-  DRAFT           // 草稿
-  PUBLISHED       // 已发布
-  SCHEDULED       // 定时发布
-  ARCHIVED        // 已归档
-  TRASH           // 回收站
+  DRAFT // 草稿
+  PUBLISHED // 已发布
+  SCHEDULED // 定时发布
+  ARCHIVED // 已归档
+  TRASH // 回收站
 }
 
 // ============================================
@@ -95,15 +96,15 @@ model Category {
   updatedAt DateTime @updatedAt
 
   // 基本信息
-  name        String  @db.VarChar(100)  // 分类名称
-  slug        String  @unique           // URL 友好的标识符（如：frontend）
-  description String? @db.Text          // 分类描述
-  icon        String?                   // 图标（可选）
-  color       String?                   // 颜色标识（如：#3B82F6）
-  order       Int     @default(0)       // 排序权重
+  name        String  @db.VarChar(100) // 分类名称
+  slug        String  @unique // URL 友好的标识符（如：frontend）
+  description String? @db.Text // 分类描述
+  icon        String? // 图标（可选）
+  color       String? // 颜色标识（如：#3B82F6）
+  order       Int     @default(0) // 排序权重
 
   // 树形结构：自引用关系
-  parentId String?                      // 父分类 ID（null 表示顶级分类）
+  parentId String? // 父分类 ID（null 表示顶级分类）
   parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
   children Category[] @relation("CategoryTree")
 
@@ -111,12 +112,12 @@ model Category {
   posts Post[]
 
   // 统计字段
-  postCount Int @default(0)  // 该分类下的文章数量
+  postCount Int @default(0) // 该分类下的文章数量
 
   // 索引优化
-  @@index([slug])      // slug 用于 URL 查询，需要索引
-  @@index([parentId])  // 树形查询时经常用 parentId，需要索引
-  @@index([order])     // 排序时需要索引
+  @@index([slug]) // slug 用于 URL 查询，需要索引
+  @@index([parentId]) // 树形查询时经常用 parentId，需要索引
+  @@index([order]) // 排序时需要索引
 }
 
 // ============================================
@@ -130,16 +131,16 @@ model Tag {
   updatedAt DateTime @updatedAt
 
   // 基本信息
-  name        String  @unique @db.VarChar(50)  // 标签名称（唯一）
-  slug        String  @unique                  // URL 友好的标识符
-  description String? @db.VarChar(255)         // 标签描述
-  color       String?                          // 标签颜色（如：#10B981）
+  name        String  @unique @db.VarChar(50) // 标签名称（唯一）
+  slug        String  @unique // URL 友好的标识符
+  description String? @db.VarChar(255) // 标签描述
+  color       String? // 标签颜色（如：#10B981）
 
   // 关联的文章（通过中间表）
   posts PostTag[]
 
   // 统计字段
-  postCount Int @default(0)  // 该标签下的文章数量
+  postCount Int @default(0) // 该标签下的文章数量
 
   // 索引优化
   @@index([slug])
@@ -162,7 +163,6 @@ model PostTag {
 
   // 组合唯一约束：一篇文章不能重复添加同一个标签
   @@unique([postId, tagId])
-
   // 索引优化
   @@index([postId])
   @@index([tagId])
@@ -180,21 +180,21 @@ model PostMeta {
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   // SEO 字段
-  metaTitle       String? @db.VarChar(70)   // SEO 标题（建议 60-70 字符）
-  metaDescription String? @db.VarChar(160)  // SEO 描述（建议 150-160 字符）
-  metaKeywords    String? @db.VarChar(255)  // 关键词
-  canonicalUrl    String?                   // 规范 URL
-  
+  metaTitle       String? @db.VarChar(70) // SEO 标题（建议 60-70 字符）
+  metaDescription String? @db.VarChar(160) // SEO 描述（建议 150-160 字符）
+  metaKeywords    String? @db.VarChar(255) // 关键词
+  canonicalUrl    String? // 规范 URL
+
   // Open Graph（社交媒体分享）
-  ogTitle         String? @db.VarChar(95)   // Open Graph 标题
-  ogDescription   String? @db.VarChar(200)  // Open Graph 描述
-  ogImage         String?                   // Open Graph 图片 URL
-  
+  ogTitle       String? @db.VarChar(95) // Open Graph 标题
+  ogDescription String? @db.VarChar(200) // Open Graph 描述
+  ogImage       String? // Open Graph 图片 URL
+
   // Twitter Card
-  twitterCard     String? @default("summary_large_image")  // Twitter 卡片类型
-  twitterTitle    String? @db.VarChar(70)   // Twitter 标题
+  twitterCard        String? @default("summary_large_image") // Twitter 卡片类型
+  twitterTitle       String? @db.VarChar(70) // Twitter 标题
   twitterDescription String? @db.VarChar(200) // Twitter 描述
-  twitterImage    String?                   // Twitter 图片 URL
+  twitterImage       String? // Twitter 图片 URL
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -206,11 +206,11 @@ model PostMeta {
 
 /// 媒体类型枚举
 enum MediaType {
-  IMAGE       // 图片
-  VIDEO       // 视频
-  AUDIO       // 音频
-  DOCUMENT    // 文档
-  OTHER       // 其他
+  IMAGE // 图片
+  VIDEO // 视频
+  AUDIO // 音频
+  DOCUMENT // 文档
+  OTHER // 其他
 }
 
 /// 媒体文件模型
@@ -221,29 +221,29 @@ model Media {
   updatedAt DateTime @updatedAt
 
   // 基本信息
-  filename     String  @db.VarChar(255)  // 原始文件名
-  title        String? @db.VarChar(255)  // 媒体标题（用户可自定义）
-  description  String? @db.Text          // 媒体描述
-  altText      String? @db.VarChar(255)  // 图片 alt 文本（SEO）
+  filename    String  @db.VarChar(255) // 原始文件名
+  title       String? @db.VarChar(255) // 媒体标题（用户可自定义）
+  description String? @db.Text // 媒体描述
+  altText     String? @db.VarChar(255) // 图片 alt 文本（SEO）
 
   // 文件信息
-  type         MediaType                 // 媒体类型
-  mimeType     String  @db.VarChar(100)  // MIME 类型（如：image/jpeg）
-  size         Int                        // 文件大小（字节）
-  path         String  @db.VarChar(500)  // 文件存储路径
-  url          String  @db.VarChar(500)  // 访问 URL
+  type     MediaType // 媒体类型
+  mimeType String    @db.VarChar(100) // MIME 类型（如：image/jpeg）
+  size     Int // 文件大小（字节）
+  path     String    @db.VarChar(500) // 文件存储路径
+  url      String    @db.VarChar(500) // 访问 URL
 
   // 图片特定信息（仅 IMAGE 类型）
-  width        Int?                       // 图片宽度
-  height       Int?                       // 图片高度
-  thumbnailUrl String? @db.VarChar(500)  // 缩略图 URL
+  width        Int? // 图片宽度
+  height       Int? // 图片高度
+  thumbnailUrl String? @db.VarChar(500) // 缩略图 URL
 
   // 上传者信息
   uploaderId String
   uploader   User   @relation(fields: [uploaderId], references: [id])
 
   // 元数据（可扩展）
-  metadata Json?  // 存储额外的元数据（如：EXIF、视频时长等）
+  metadata Json? // 存储额外的元数据（如：EXIF、视频时长等）
 
   // 索引优化
   @@index([uploaderId])
@@ -257,10 +257,10 @@ model Media {
 
 /// 评论状态枚举
 enum CommentStatus {
-  PENDING     // 待审核
-  APPROVED    // 已批准
-  REJECTED    // 已拒绝
-  SPAM        // 垃圾评论
+  PENDING // 待审核
+  APPROVED // 已批准
+  REJECTED // 已拒绝
+  SPAM // 垃圾评论
 }
 
 /// 评论模型
@@ -271,7 +271,7 @@ model Comment {
   updatedAt DateTime @updatedAt
 
   // 评论内容
-  content String @db.Text  // 评论正文
+  content String @db.Text // 评论正文
 
   // 关联的文章
   postId String
@@ -282,20 +282,49 @@ model Comment {
   author   User   @relation(fields: [authorId], references: [id])
 
   // 树形结构：嵌套回复（自引用关系）
-  parentId String?                           // 父评论 ID（null 表示顶级评论）
+  parentId String? // 父评论 ID（null 表示顶级评论）
   parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies  Comment[] @relation("CommentReplies")
 
   // 审核状态
-  status CommentStatus @default(PENDING)  // 默认待审核
+  status CommentStatus @default(PENDING) // 默认待审核
 
   // 互动统计
-  likes Int @default(0)  // 点赞数
+  likes Int @default(0) // 点赞数
 
   // 索引优化
-  @@index([postId])     // 查询文章评论时需要
-  @@index([authorId])   // 查询用户评论时需要
-  @@index([parentId])   // 查询嵌套回复时需要
-  @@index([status])     // 筛选审核状态时需要
-  @@index([createdAt])  // 按时间排序时需要
+  @@index([postId]) // 查询文章评论时需要
+  @@index([authorId]) // 查询用户评论时需要
+  @@index([parentId]) // 查询嵌套回复时需要
+  @@index([status]) // 筛选审核状态时需要
+  @@index([createdAt]) // 按时间排序时需要
+}
+
+// ============================================
+// 搜索系统
+// ============================================
+
+/// 搜索历史模型
+/// 记录用户的搜索行为，用于搜索建议和热门搜索统计
+model SearchHistory {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // 搜索关键词
+  query String @db.VarChar(200) // 搜索查询
+
+  // 搜索用户（可选，未登录用户为 null）
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 搜索结果统计
+  resultsCount Int @default(0) // 搜索结果数量
+
+  // 搜索来源（用于分析）
+  source String? @db.VarChar(50) // 搜索来源：web、mobile、api 等
+
+  // 索引优化
+  @@index([query]) // 搜索建议时需要
+  @@index([userId]) // 查询用户搜索历史时需要
+  @@index([createdAt]) // 按时间统计时需要
 }

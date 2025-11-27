@@ -285,6 +285,9 @@ type Mutation {
   addTagsToPost(postId: String!, tagIds: [String!]!): [Tag!]!
   changePassword(data: ChangePasswordInput!): User!
 
+  """清空用户搜索历史"""
+  clearMySearchHistory: Boolean!
+
   """创建新分类"""
   createCategory(data: CreateCategoryInput!): Category!
 
@@ -395,6 +398,17 @@ type PageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   startCursor: String
+}
+
+type PopularSearch {
+  """搜索次数"""
+  count: Int!
+
+  """最近搜索时间"""
+  lastSearchedAt: DateTime!
+
+  """搜索关键词"""
+  query: String!
 }
 
 type Post {
@@ -616,12 +630,24 @@ type Query {
 
   """获取用户的媒体统计"""
   myMediaStats: MediaStats!
+
+  """获取用户搜索历史"""
+  mySearchHistory(limit: Int = 20): [SearchResult!]! @deprecated(reason: "返回类型待优化")
+
+  """获取热门搜索"""
+  popularSearches(days: Int = 7, limit: Int = 10): [PopularSearch!]!
   post: Post!
   postBySlug(slug: String!): Post
 
   """查询某篇文章的评论（树形结构）"""
   postComments(postId: String!, status: CommentStatus): [Comment!]!
   publishedPosts(orderBy: PostOrder, query: String): PostConnection!
+
+  """搜索文章"""
+  search(data: SearchInput!): SearchResult!
+
+  """获取搜索建议"""
+  searchSuggestions(limit: Int = 10, prefix: String!): [SearchSuggestion!]!
 
   """根据 ID 获取单个标签"""
   tag(
@@ -644,6 +670,42 @@ type Query {
 enum Role {
   ADMIN
   USER
+}
+
+input SearchInput {
+  """限制返回结果数量"""
+  limit: Int = 10
+
+  """搜索关键词"""
+  query: String!
+
+  """跳过的结果数量"""
+  skip: Int = 0
+
+  """搜索来源"""
+  source: String
+}
+
+type SearchResult {
+  """搜索结果列表"""
+  posts: [Post!]!
+
+  """搜索关键词"""
+  query: String!
+
+  """搜索耗时（毫秒）"""
+  took: Int
+
+  """总结果数"""
+  totalCount: Int!
+}
+
+type SearchSuggestion {
+  """搜索次数"""
+  count: Int!
+
+  """建议的搜索词"""
+  query: String!
 }
 
 input SignupInput {

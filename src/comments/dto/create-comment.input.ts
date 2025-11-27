@@ -25,6 +25,9 @@ export class CreateCommentInput {
   /**
    * 父评论 ID（嵌套回复时）
    */
-  @Field(() => String, { nullable: true, description: '父评论 ID（回复评论时使用）' })
+  @Field(() => String, {
+    nullable: true,
+    description: '父评论 ID（回复评论时使用）',
+  })
   parentId?: string;
 }
