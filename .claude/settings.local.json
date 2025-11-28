@@ -42,7 +42,8 @@
       "Bash(chmod:*)",
       "Bash(/tmp/test_approval_workflow.sh)",
       "Bash(/tmp/test_analytics.sh:*)",
-      "Bash(/tmp/fix_resolvers_security.sh)"
+      "Bash(/tmp/fix_resolvers_security.sh)",
+      "Bash(/tmp/test_dashboard.sh:*)"
     ],
     "deny": [],
     "ask": []

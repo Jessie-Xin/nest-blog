@@ -62,6 +62,23 @@ type ApprovalRequest {
   updatedAt: DateTime!
 }
 
+type ApprovalStats {
+  """通过率（0-100）"""
+  approvalRate: Int!
+
+  """已批准数量"""
+  approved: Int!
+
+  """待审批数量"""
+  pending: Int!
+
+  """已拒绝数量"""
+  rejected: Int!
+
+  """总审批请求"""
+  total: Int!
+}
+
 """审批状态"""
 enum ApprovalStatus {
   APPROVED
@@ -171,6 +188,23 @@ enum CommentStatus {
   SPAM
 }
 
+type ContentStats {
+  """已归档数量"""
+  archived: Int!
+
+  """草稿数量"""
+  drafts: Int!
+
+  """已发布数量"""
+  published: Int!
+
+  """定时发布数量"""
+  scheduled: Int!
+
+  """回收站数量"""
+  trash: Int!
+}
+
 input CreateApprovalRequestInput {
   """需要审批的文章 ID"""
   postId: String!
@@ -262,6 +296,23 @@ input CreateTagInput {
 
   """URL 友好的唯一标识符"""
   slug: String!
+}
+
+type DashboardStats {
+  """审批统计"""
+  approvals: ApprovalStats!
+
+  """内容统计"""
+  content: ContentStats!
+
+  """总体统计"""
+  overall: OverallStats!
+
+  """热门文章（Top 10）"""
+  popularPosts: [PopularPostItem!]!
+
+  """最近活跃用户（Top 10）"""
+  recentActiveUsers: [RecentActiveUser!]!
 }
 
 """
@@ -516,11 +567,54 @@ enum OrderDirection {
   desc
 }
 
+type OverallStats {
+  """草稿数"""
+  draftPosts: Int!
+
+  """待审批文章数"""
+  pendingApprovals: Int!
+
+  """已发布文章数"""
+  publishedPosts: Int!
+
+  """分类总数"""
+  totalCategories: Int!
+
+  """评论总数"""
+  totalComments: Int!
+
+  """文章总数"""
+  totalPosts: Int!
+
+  """标签总数"""
+  totalTags: Int!
+
+  """用户总数"""
+  totalUsers: Int!
+}
+
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   startCursor: String
+}
+
+type PopularPostItem {
+  """评论数"""
+  commentCount: Int!
+
+  """文章 ID"""
+  id: String!
+
+  """发布时间"""
+  publishedAt: DateTime
+
+  """文章标题"""
+  title: String!
+
+  """浏览次数"""
+  viewCount: Int!
 }
 
 type PopularSearch {
@@ -868,6 +962,9 @@ type Query {
     """文章 ID"""
     postId: String!
   ): RevisionDiff!
+
+  """获取仪表板统计数据（需要管理员权限）"""
+  dashboardStats: DashboardStats!
   hello(name: String!): String!
   helloWorld: String!
   me: User!
@@ -949,6 +1046,23 @@ type Query {
   """获取顶级分类列表"""
   topLevelCategories: [Category!]!
   userPosts: [Post!]!
+}
+
+type RecentActiveUser {
+  """用户邮箱"""
+  email: String!
+
+  """用户 ID"""
+  id: String!
+
+  """最后活动时间"""
+  lastActiveAt: DateTime!
+
+  """用户名"""
+  name: String
+
+  """文章数"""
+  postCount: Int!
 }
 
 input RecordViewInput {

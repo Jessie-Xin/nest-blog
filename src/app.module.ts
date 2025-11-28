@@ -16,6 +16,7 @@ import { SearchModule } from './search/search.module';
 import { RevisionsModule } from './revisions/revisions.module';
 import { ApprovalsModule } from './approvals/approvals.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import config from './common/configs/config';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GqlConfigService } from './gql-config.service';
@@ -49,6 +50,7 @@ import { GqlConfigService } from './gql-config.service';
     RevisionsModule, // 新增版本历史模块
     ApprovalsModule, // 新增审批工作流模块
     AnalyticsModule, // 新增访问统计模块
+    DashboardModule, // 新增仪表板统计模块
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],

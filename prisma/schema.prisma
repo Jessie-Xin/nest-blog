@@ -23,7 +23,6 @@ model User {
   firstname     String?
   lastname      String?
   posts         Post[]
-  role          Role
   media            Media[]            // 用户上传的媒体文件
   comments         Comment[]          // 用户发表的评论
   searchHistory    SearchHistory[]    // 用户的搜索历史
@@ -31,6 +30,10 @@ model User {
   approvalRequests ApprovalRequest[]  @relation("ApprovalRequester") // 用户发起的审批请求
   approvalActions  ApprovalAction[]   @relation("ApprovalApprover") // 用户执行的审批操作
   postViews        PostView[]         // 用户的浏览记录
+
+  // RBAC 权限系统
+  roles            UserRole[]         // 用户的角色（多对多）
+  assignedRoles    UserRole[]         @relation("RoleAssigner") // 用户分配给他人的角色
 }
 
 model Post {
@@ -82,11 +85,6 @@ model Post {
   @@index([slug])
   @@index([status])
   @@index([publishedAt])
-}
-
-enum Role {
-  ADMIN
-  USER
 }
 
 /// 文章状态枚举
@@ -494,4 +492,110 @@ model PostView {
   @@index([userId]) // 查询用户浏览历史
   @@index([createdAt]) // 按时间统计
   @@index([postId, createdAt]) // 复合索引，用于文章的时间序列统计
+}
+
+// ============================================
+// RBAC 权限管理系统
+// ============================================
+
+/// 权限模型 - 定义系统中的各种权限
+model Permission {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 权限基本信息
+  name        String @db.VarChar(100) // 权限名称（如：创建文章、删除用户）
+  code        String @unique @db.VarChar(100) // 权限代码（如：post:create、user:delete）
+  description String? @db.VarChar(255) // 权限描述
+
+  // 权限分类
+  resource String @db.VarChar(50) // 资源类型（如：post、user、category）
+  action   String @db.VarChar(50) // 操作类型（如：create、read、update、delete）
+
+  // 是否是系统权限（系统权限不可删除）
+  isSystem Boolean @default(false)
+
+  // 关联的角色（多对多）
+  roles RolePermission[]
+
+  @@unique([resource, action]) // 资源-操作组合唯一
+  @@index([code])
+  @@index([resource])
+}
+
+/// 系统角色模型 - 替代原有的 Role 枚举，提供更灵活的角色管理
+model SystemRole {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 角色基本信息
+  name        String  @unique @db.VarChar(50) // 角色名称（如：管理员、编辑、作者）
+  code        String  @unique @db.VarChar(50) // 角色代码（如：admin、editor、author）
+  description String? @db.VarChar(255) // 角色描述
+
+  // 是否是系统角色（系统角色不可删除）
+  isSystem Boolean @default(false)
+
+  // 是否激活
+  isActive Boolean @default(true)
+
+  // 优先级（数字越大优先级越高，用于权限判断）
+  priority Int @default(0)
+
+  // 关联的权限（多对多）
+  permissions RolePermission[]
+
+  // 关联的用户（多对多）
+  users UserRole[]
+
+  @@index([code])
+  @@index([priority])
+}
+
+/// 角色-权限关联表
+model RolePermission {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // 关联的角色
+  roleId String
+  role   SystemRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  // 关联的权限
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  // 组合唯一约束：一个角色不能重复添加同一个权限
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+/// 用户-角色关联表
+model UserRole {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // 关联的用户
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 关联的角色
+  roleId String
+  role   SystemRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  // 分配者（哪个管理员分配的）
+  assignedById String?
+  assignedBy   User?   @relation("RoleAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  // 过期时间（可选，用于临时权限）
+  expiresAt DateTime?
+
+  // 组合唯一约束：一个用户不能重复拥有同一个角色
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@index([expiresAt])
 }

@@ -63,7 +63,21 @@ export class RevisionsService {
         publishedAt: post.publishedAt,
         categoryId: post.categoryId,
         tagIds,
-        metaData: post.meta ? (post.meta as unknown) : null,
+        metaData: post.meta
+          ? {
+              metaTitle: post.meta.metaTitle,
+              metaDescription: post.meta.metaDescription,
+              metaKeywords: post.meta.metaKeywords,
+              canonicalUrl: post.meta.canonicalUrl,
+              ogTitle: post.meta.ogTitle,
+              ogDescription: post.meta.ogDescription,
+              ogImage: post.meta.ogImage,
+              twitterCard: post.meta.twitterCard,
+              twitterTitle: post.meta.twitterTitle,
+              twitterDescription: post.meta.twitterDescription,
+              twitterImage: post.meta.twitterImage,
+            }
+          : null,
         createdBy: {
           connect: { id: userId },
         },
