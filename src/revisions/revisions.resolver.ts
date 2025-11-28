@@ -22,8 +22,6 @@ import {
 } from './args/revision.args';
 import { CreateRevisionInput } from './dto/create-revision.input';
 import { PrismaService } from 'nestjs-prisma';
-import { Role } from '@prisma/client';
-import { ForbiddenException } from '@nestjs/common';
 
 /**
  * 版本���史解析器
@@ -100,14 +98,9 @@ export class RevisionsResolver {
   /**
    * 删除指定版本（仅管理员）
    */
-  @UseGuards(GqlAuthGuard)
+  @UseGuards(AdminGuard)
   @Mutation(() => PostRevision, { description: '删除指定版本（仅管理员）' })
-  async deleteRevision(@Args() args: RevisionIdArgs, @UserEntity() user: User) {
-    // 验���管理员权限
-    if (user.role !== Role.ADMIN) {
-      throw new ForbiddenException('只有管理员可以删除版本');
-    }
-
+  async deleteRevision(@Args() args: RevisionIdArgs) {
     return this.revisionsService.deleteRevision(args.revisionId);
   }
 

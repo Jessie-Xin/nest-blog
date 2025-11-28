@@ -9,7 +9,7 @@ import { CreateApprovalRequestInput } from './dto/create-approval-request.input'
 import { ProcessApprovalInput } from './dto/process-approval.input';
 import { ApprovalStatus } from '@prisma/client';
 import { ApprovalActionType } from '@prisma/client';
-import { PostStatus, Role } from '@prisma/client';
+import { PostStatus } from '@prisma/client';
 
 /**
  * 审批服务
@@ -381,18 +381,31 @@ export class ApprovalsService {
   }
 
   /**
-   * 验证用户是否有审批权限（管理员）
+   * 验证用户是否有审批权限（已废弃，现在使用 AdminGuard）
+   * @deprecated 使用 AdminGuard 替代
    */
   async validateApproverPermission(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
     });
 
     if (!user) {
       throw new NotFoundException(`用户 ${userId} 不存在`);
     }
 
-    if (user.role !== Role.ADMIN) {
+    // 檢查用戶是否有管理員角色
+    const isAdmin = user.roles?.some(
+      (userRole: any) => userRole.role?.code === 'admin' && userRole.role?.isActive === true
+    );
+
+    if (!isAdmin) {
       throw new ForbiddenException('只有管理员可以执行审批操作');
     }
 

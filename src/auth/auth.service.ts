@@ -43,14 +43,28 @@ export class AuthService {
     );
 
     try {
-      // 在数据库中创建新用户
+      // 在数据库中创建新用户（默认分配 "user" 角色）
       const user = await this.prisma.user.create({
         data: {
           ...payload,
           password: hashedPassword,
-          role: 'USER', // 默认角色为 USER
         },
       });
+
+      // 查找 "user" 角色
+      const userRole = await this.prisma.systemRole.findUnique({
+        where: { code: 'user' },
+      });
+
+      if (userRole) {
+        // 为新用户分配默认角色
+        await this.prisma.userRole.create({
+          data: {
+            userId: user.id,
+            roleId: userRole.id,
+          },
+        });
+      }
 
       // 生成访问令牌和刷新令牌
       return this.generateTokens({
@@ -101,10 +115,27 @@ export class AuthService {
   /**
    * 根据用户ID验证用户
    * @param userId 用户ID
-   * @returns 用户对象
+   * @returns 用户对象（包含角色信息）
    */
   validateUser(userId: string): Promise<User> {
-    return this.prisma.user.findUnique({ where: { id: userId } });
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        roles: {
+          include: {
+            role: {
+              include: {
+                permissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   /**

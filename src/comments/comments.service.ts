@@ -221,8 +221,27 @@ export class CommentsService {
    * 删除评论
    * 评论作者或管理员可以删除
    */
-  async remove(id: string, userId: string, isAdmin: boolean) {
+  async remove(id: string, userId: string) {
     const comment = await this.findOne(id);
+
+    // 查询用户信息，包括角色
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    // 检查是否是管理员
+    const isAdmin =
+      user?.roles?.some(
+        (userRole: any) =>
+          userRole.role?.code === 'admin' && userRole.role?.isActive === true,
+      ) || false;
 
     // 验证权限：只有作者或管理员可以删除
     if (comment.authorId !== userId && !isAdmin) {

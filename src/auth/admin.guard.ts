@@ -1,10 +1,9 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { Role } from '@prisma/client';
 
 /**
  * 管理员权限守卫
- * 验证当前用户是否为管理员角色
+ * 验证当前用户是否拥有管理员角色
  *
  * 使用方式：
  * @UseGuards(GqlAuthGuard, AdminGuard)
@@ -22,7 +21,14 @@ export class AdminGuard implements CanActivate {
       return false;
     }
 
-    // 验证用户角色是否为管理员
-    return user.role === Role.ADMIN;
+    // 检查用户是否有角色信息
+    if (!user.roles || !Array.isArray(user.roles)) {
+      return false;
+    }
+
+    // 检查用户是否拥有 "admin" 角色
+    return user.roles.some(
+      (userRole: any) => userRole.role?.code === 'admin' && userRole.role?.isActive === true,
+    );
   }
 }

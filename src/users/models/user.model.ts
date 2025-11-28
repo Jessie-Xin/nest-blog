@@ -1,24 +1,12 @@
 import 'reflect-metadata';
-import {
-  ObjectType,
-  registerEnumType,
-  HideField,
-  Field,
-} from '@nestjs/graphql';
+import { ObjectType, HideField, Field } from '@nestjs/graphql';
 import { IsEmail } from 'class-validator';
 import { Post } from '../../posts/models/post.model';
 import { BaseModel } from '../../common/models/base.model';
-import { Role } from '@prisma/client';
-
-// 注册 Role 枚举类型到 GraphQL 模式
-registerEnumType(Role, {
-  name: 'Role', // 枚举名称
-  description: 'User role', // 枚举描述
-});
 
 /**
  * 用户模型
- * 继承自基础模型，包含用户的基本信息、角色和关联的文章
+ * 继承自基础模型，包含用户的基本信息和关联的文章
  */
 @ObjectType()
 export class User extends BaseModel {
@@ -43,13 +31,6 @@ export class User extends BaseModel {
    */
   @Field(() => String, { nullable: true })
   lastname?: string;
-
-  /**
-   * 用户角色
-   * 定义用户在系统中的权限角色
-   */
-  @Field(() => Role)
-  role: Role;
 
   /**
    * 用户文章

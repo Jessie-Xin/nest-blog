@@ -20,8 +20,6 @@ import { UpdateCommentInput } from './dto/update-comment.input';
 import { UpdateCommentStatusInput } from './dto/update-comment-status.input';
 import { CommentStatus } from './models/comment-status.enum';
 import { PrismaService } from 'nestjs-prisma';
-import { Role } from '@prisma/client';
-import { ForbiddenException } from '@nestjs/common';
 
 /**
  * 评论解析器
@@ -100,27 +98,22 @@ export class CommentsResolver {
   /**
    * 更新评论状态（管理员专用）
    */
+  @UseGuards(AdminGuard)
   @Mutation(() => Comment, { description: '更新评论状态（管理员专用）' })
   async updateCommentStatus(
     @Args() args: CommentIdArgs,
     @Args('data') data: UpdateCommentStatusInput,
-    @UserEntity() user: User,
   ) {
-    // 验证管理员权限
-    if (user.role !== Role.ADMIN) {
-      throw new ForbiddenException('只有管理员可以更新评论状态');
-    }
-
     return this.commentsService.updateStatus(args.commentId, data);
   }
 
   /**
    * 删除评论
+   * 用户可以删除自己的评论，管理员可以删除任何评论
    */
   @Mutation(() => Comment, { description: '删除评论' })
   async deleteComment(@Args() args: CommentIdArgs, @UserEntity() user: User) {
-    const isAdmin = user.role === Role.ADMIN;
-    return this.commentsService.remove(args.commentId, user.id, isAdmin);
+    return this.commentsService.remove(args.commentId, user.id);
   }
 
   /**

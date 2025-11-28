@@ -59,12 +59,11 @@ export class ApprovalsResolver {
   /**
    * 查询所有待审批的请求（管理员）
    */
+  @UseGuards(AdminGuard)
   @Query(() => [ApprovalRequest], {
     description: '查询所有待审批的请求（管理员）',
   })
-  async pendingApprovalRequests(@UserEntity() user: User) {
-    // 验证管理员权限
-    await this.approvalsService.validateApproverPermission(user.id);
+  async pendingApprovalRequests() {
     return this.approvalsService.getPendingRequests();
   }
 
@@ -96,6 +95,7 @@ export class ApprovalsResolver {
    * 批准审批请求（管理员）
    * 批准后文章自动发布
    */
+  @UseGuards(AdminGuard)
   @Mutation(() => ApprovalRequest, {
     description: '批准审批请求（管理员）',
   })
@@ -103,14 +103,13 @@ export class ApprovalsResolver {
     @Args('data') data: ProcessApprovalInput,
     @UserEntity() user: User,
   ) {
-    // 验证管理员权限
-    await this.approvalsService.validateApproverPermission(user.id);
     return this.approvalsService.approveRequest(data, user.id);
   }
 
   /**
    * 拒绝审批请求（管理员）
    */
+  @UseGuards(AdminGuard)
   @Mutation(() => ApprovalRequest, {
     description: '拒绝审批请求（管理员）',
   })
@@ -118,8 +117,6 @@ export class ApprovalsResolver {
     @Args('data') data: ProcessApprovalInput,
     @UserEntity() user: User,
   ) {
-    // 验证管理员权限
-    await this.approvalsService.validateApproverPermission(user.id);
     return this.approvalsService.rejectRequest(data, user.id);
   }
 
@@ -139,6 +136,7 @@ export class ApprovalsResolver {
    * 添加审批评论（管理员）
    * 不改变审批状态，仅添加反馈评论
    */
+  @UseGuards(AdminGuard)
   @Mutation(() => ApprovalAction, {
     description: '添加审批评论（管理员）',
   })
@@ -146,8 +144,6 @@ export class ApprovalsResolver {
     @Args('data') data: ProcessApprovalInput,
     @UserEntity() user: User,
   ) {
-    // 验证管理员权限
-    await this.approvalsService.validateApproverPermission(user.id);
     return this.approvalsService.addComment(data, user.id);
   }
 
