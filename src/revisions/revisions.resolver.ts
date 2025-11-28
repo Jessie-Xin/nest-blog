@@ -11,6 +11,7 @@ import { PostRevision } from './models/post-revision.model';
 import { RevisionDiff } from './models/revision-diff.model';
 import { RevisionsService } from './revisions.service';
 import { GqlAuthGuard } from '../auth/gql-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import { UserEntity } from '../common/decorators/user.decorator';
 import { User } from '../users/models/user.model';
 import { Post } from '../posts/models/post.model';
@@ -28,6 +29,7 @@ import { ForbiddenException } from '@nestjs/common';
  * 版本���史解析器
  * 处理文章版本历史相关的 GraphQL 查询和变更
  */
+@UseGuards(GqlAuthGuard)
 @Resolver(() => PostRevision)
 export class RevisionsResolver {
   constructor(

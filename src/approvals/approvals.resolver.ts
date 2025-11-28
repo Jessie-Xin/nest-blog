@@ -11,6 +11,7 @@ import { ApprovalRequest } from './models/approval-request.model';
 import { ApprovalAction } from './models/approval-action.model';
 import { ApprovalsService } from './approvals.service';
 import { GqlAuthGuard } from '../auth/gql-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import { UserEntity } from '../common/decorators/user.decorator';
 import { User } from '../users/models/user.model';
 import { Post } from '../posts/models/post.model';
@@ -26,6 +27,7 @@ import { PrismaService } from 'nestjs-prisma';
  * 审批工作流解析器
  * 处理文章审批相关的 GraphQL 查询和变更
  */
+@UseGuards(GqlAuthGuard)
 @Resolver(() => ApprovalRequest)
 export class ApprovalsResolver {
   constructor(
@@ -57,7 +59,6 @@ export class ApprovalsResolver {
   /**
    * 查询所有待审批的请求（管理员）
    */
-  @UseGuards(GqlAuthGuard)
   @Query(() => [ApprovalRequest], {
     description: '查询所有待审批的请求（管理员）',
   })
@@ -70,7 +71,6 @@ export class ApprovalsResolver {
   /**
    * 查询当前用户的所有审批请求
    */
-  @UseGuards(GqlAuthGuard)
   @Query(() => [ApprovalRequest], {
     description: '查询当前用户的所有审批请求',
   })
@@ -84,7 +84,6 @@ export class ApprovalsResolver {
    * 创建审批请求
    * 作者提交文章等待审批
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => ApprovalRequest, { description: '创建审批请求' })
   async createApprovalRequest(
     @Args('data') data: CreateApprovalRequestInput,
@@ -97,7 +96,6 @@ export class ApprovalsResolver {
    * 批准审批请求（管理员）
    * 批准后文章自动发布
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => ApprovalRequest, {
     description: '批准审批请求（管理员）',
   })
@@ -113,7 +111,6 @@ export class ApprovalsResolver {
   /**
    * 拒绝审批请求（管理员）
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => ApprovalRequest, {
     description: '拒绝审批请求（管理员）',
   })
@@ -130,7 +127,6 @@ export class ApprovalsResolver {
    * 取消审批请求
    * 作者取消自己的审批请求
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => ApprovalRequest, { description: '取消审批请求' })
   async cancelApprovalRequest(
     @Args() args: ApprovalRequestIdArgs,
@@ -143,7 +139,6 @@ export class ApprovalsResolver {
    * 添加审批评论（管理员）
    * 不改变审批状态，仅添加反馈评论
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => ApprovalAction, {
     description: '添加审批评论（管理员）',
   })

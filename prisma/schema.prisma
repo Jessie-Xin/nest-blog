@@ -30,6 +30,7 @@ model User {
   postRevisions    PostRevision[]     // 用户创建的文章版本
   approvalRequests ApprovalRequest[]  @relation("ApprovalRequester") // 用户发起的审批请求
   approvalActions  ApprovalAction[]   @relation("ApprovalApprover") // 用户执行的审批操作
+  postViews        PostView[]         // 用户的浏览记录
 }
 
 model Post {
@@ -70,6 +71,9 @@ model Post {
 
   // 审批请求（一对一）
   approvalRequest ApprovalRequest?
+
+  // 浏览记录
+  views PostView[]
 
   // 统计字段
   viewCount Int @default(0) // 浏览次数
@@ -461,4 +465,33 @@ model ApprovalAction {
   @@index([requestId])
   @@index([approverId])
   @@index([createdAt])
+}
+
+// ============================================
+// 访问统计系统
+// ============================================
+
+/// 文章浏览记录模型
+/// 记录每次文章浏览，用于统计分析
+model PostView {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // 关联的文章
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // 浏览者（可选，未登录用户为 null）
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // 访问信息
+  ipAddress String? @db.VarChar(45) // IPv4/IPv6
+  userAgent String? @db.VarChar(500) // 浏览器信息
+
+  // 索引优化
+  @@index([postId]) // 查询文章浏览记录
+  @@index([userId]) // 查询用户浏览历史
+  @@index([createdAt]) // 按时间统计
+  @@index([postId, createdAt]) // 复合索引，用于文章的时间序列统计
 }

@@ -14,12 +14,14 @@ import { CreateTagInput } from './dto/create-tag.input';
 import { UpdateTagInput } from './dto/update-tag.input';
 import { TagIdArgs } from './args/tag-id.args';
 import { GqlAuthGuard } from '../auth/gql-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import { Post } from '../posts/models/post.model';
 
 /**
  * 标签解析器
  * 处理与标签相关的 GraphQL 查询和变更
  */
+@UseGuards(GqlAuthGuard)
 @Resolver(() => Tag)
 export class TagsResolver {
   constructor(
@@ -66,34 +68,34 @@ export class TagsResolver {
   // ============================================
 
   /**
-   * 创建标签
+   * 创建标签（需要管理员权限）
    */
+  @UseGuards(AdminGuard)
   @Mutation(() => Tag, {
-    description: '创建新标签',
+    description: '创建新标签（需要管理员权限）',
   })
-  @UseGuards(GqlAuthGuard)
   async createTag(@Args('data') data: CreateTagInput) {
     return this.tagsService.create(data);
   }
 
   /**
-   * 更新标签
+   * 更新标签（需要管理员权限）
    */
+  @UseGuards(AdminGuard)
   @Mutation(() => Tag, {
-    description: '更新标签',
+    description: '更新标签（需要管理员权限）',
   })
-  @UseGuards(GqlAuthGuard)
   async updateTag(@Args() args: TagIdArgs, @Args('data') data: UpdateTagInput) {
     return this.tagsService.update(args.id, data);
   }
 
   /**
-   * 删除标签
+   * 删除标签（需要管理员权限）
    */
+  @UseGuards(AdminGuard)
   @Mutation(() => Tag, {
-    description: '删除标签',
+    description: '删除标签（需要管理员权限）',
   })
-  @UseGuards(GqlAuthGuard)
   async deleteTag(@Args() args: TagIdArgs) {
     return this.tagsService.remove(args.id);
   }
@@ -104,7 +106,6 @@ export class TagsResolver {
   @Mutation(() => [Tag], {
     description: '为文章添加标签',
   })
-  @UseGuards(GqlAuthGuard)
   async addTagsToPost(
     @Args('postId') postId: string,
     @Args('tagIds', { type: () => [String] }) tagIds: string[],
@@ -118,7 +119,6 @@ export class TagsResolver {
   @Mutation(() => [Tag], {
     description: '移除文章的标签',
   })
-  @UseGuards(GqlAuthGuard)
   async removeTagsFromPost(
     @Args('postId') postId: string,
     @Args('tagIds', { type: () => [String] }) tagIds: string[],
@@ -132,7 +132,6 @@ export class TagsResolver {
   @Mutation(() => [Tag], {
     description: '设置文章的标签（替换所有现有标签）',
   })
-  @UseGuards(GqlAuthGuard)
   async setPostTags(
     @Args('postId') postId: string,
     @Args('tagIds', { type: () => [String] }) tagIds: string[],

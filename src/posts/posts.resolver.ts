@@ -34,7 +34,9 @@ const pubSub = new PubSub();
 /**
  * 文章解析器
  * 处理文章相关的 GraphQL 请求和订阅
+ * 所有接口都需要用户认证（后台管理系统）
  */
+@UseGuards(GqlAuthGuard)
 @Resolver(() => Post)
 export class PostsResolver {
   constructor(
@@ -45,6 +47,7 @@ export class PostsResolver {
   /**
    * 文章创建订阅
    * 当有新文章创建时触发
+   * 需要用户认证
    * @returns 异步可迭代的发布流
    */
   @Subscription(() => Post)
@@ -59,7 +62,6 @@ export class PostsResolver {
    * @param data 创建文章的输入数据
    * @returns 创建的文章对象
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => Post)
   async createPost(
     @UserEntity() user: User,
@@ -80,7 +82,6 @@ export class PostsResolver {
    * @param data 更新文章的输入数据
    * @returns 更新后的文章对象
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => Post)
   async updatePost(
     @Args() id: PostIdArgs,
@@ -93,7 +94,6 @@ export class PostsResolver {
    * 删除文章
    * 需要用户认证
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => Post)
   async deletePost(@Args() id: PostIdArgs) {
     return this.postsService.deletePost(id.postId);
@@ -102,6 +102,7 @@ export class PostsResolver {
   /**
    * 查询已发布文章
    * 支持分页、搜索和排序功能
+   * 需要用户认证
    * @param after 分页参数 - 在指定游标之后的记录
    * @param before 分页参数 - 在指定游标之前的记录
    * @param first 分页参数 - 获取的记录数量（向前）
@@ -179,7 +180,6 @@ export class PostsResolver {
    * 查询所有文章（包括草稿）
    * 需要认证，管理员使用
    */
-  @UseGuards(GqlAuthGuard)
   @Query(() => PostConnection)
   async allPosts(
     @Args() { after, before, first, last }: PaginationArgs,

@@ -14,12 +14,15 @@ import { CreateCategoryInput } from './dto/create-category.input';
 import { UpdateCategoryInput } from './dto/update-category.input';
 import { CategoryIdArgs } from './args/category-id.args';
 import { GqlAuthGuard } from '../auth/gql-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import { Post } from '../posts/models/post.model';
 
 /**
  * 分类解析器
  * 处理与分类相关的 GraphQL 查询和变更
+ * 所有接口都需要用户认证（后台管理系统）
  */
+@UseGuards(GqlAuthGuard)
 @Resolver(() => Category)
 export class CategoriesResolver {
   constructor(
@@ -98,10 +101,10 @@ export class CategoriesResolver {
   /**
    * 创建分类（需要管理员权限）
    */
+  @UseGuards(AdminGuard)
   @Mutation(() => Category, {
-    description: '创建新分类',
+    description: '创建新分类（需要管理员权限）',
   })
-  @UseGuards(GqlAuthGuard)
   async createCategory(@Args('data') data: CreateCategoryInput) {
     return this.categoriesService.create(data);
   }
@@ -109,10 +112,10 @@ export class CategoriesResolver {
   /**
    * 更新分类（需要管理员权限）
    */
+  @UseGuards(AdminGuard)
   @Mutation(() => Category, {
-    description: '更新分类',
+    description: '更新分类（需要管理员权限）',
   })
-  @UseGuards(GqlAuthGuard)
   async updateCategory(
     @Args() args: CategoryIdArgs,
     @Args('data') data: UpdateCategoryInput,
@@ -123,10 +126,10 @@ export class CategoriesResolver {
   /**
    * 删除分类（需要管理员权限）
    */
+  @UseGuards(AdminGuard)
   @Mutation(() => Category, {
-    description: '删除分类',
+    description: '删除分类（需要管理员权限）',
   })
-  @UseGuards(GqlAuthGuard)
   async deleteCategory(@Args() args: CategoryIdArgs) {
     return this.categoriesService.remove(args.id);
   }

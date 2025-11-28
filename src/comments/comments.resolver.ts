@@ -10,6 +10,7 @@ import { UseGuards } from '@nestjs/common';
 import { Comment } from './models/comment.model';
 import { CommentsService } from './comments.service';
 import { GqlAuthGuard } from '../auth/gql-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import { UserEntity } from '../common/decorators/user.decorator';
 import { User } from '../users/models/user.model';
 import { Post } from '../posts/models/post.model';
@@ -26,6 +27,7 @@ import { ForbiddenException } from '@nestjs/common';
  * 评论解析器
  * 处理评论相关的 GraphQL 查询和变更
  */
+@UseGuards(GqlAuthGuard)
 @Resolver(() => Comment)
 export class CommentsResolver {
   constructor(
@@ -38,7 +40,6 @@ export class CommentsResolver {
   /**
    * 查询所有评论（可筛选）
    */
-  @UseGuards(GqlAuthGuard)
   @Query(() => [Comment], { description: '查询所有评论' })
   async comments(
     @Args('postId', { type: () => String, nullable: true })
@@ -76,7 +77,6 @@ export class CommentsResolver {
   /**
    * 创建评论
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => Comment, { description: '创建评论' })
   async createComment(
     @Args('data') data: CreateCommentInput,
@@ -88,7 +88,6 @@ export class CommentsResolver {
   /**
    * 更新评论内容
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => Comment, { description: '更新评论内容' })
   async updateComment(
     @Args() args: CommentIdArgs,
@@ -101,7 +100,6 @@ export class CommentsResolver {
   /**
    * 更新评论状态（管理员专用）
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => Comment, { description: '更新评论状态（管理员专用）' })
   async updateCommentStatus(
     @Args() args: CommentIdArgs,
@@ -119,7 +117,6 @@ export class CommentsResolver {
   /**
    * 删除评论
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => Comment, { description: '删除评论' })
   async deleteComment(@Args() args: CommentIdArgs, @UserEntity() user: User) {
     const isAdmin = user.role === Role.ADMIN;
@@ -129,7 +126,6 @@ export class CommentsResolver {
   /**
    * 点赞评论
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => Comment, { description: '点赞评论' })
   async likeComment(@Args() args: CommentIdArgs) {
     return this.commentsService.like(args.commentId);
@@ -138,7 +134,6 @@ export class CommentsResolver {
   /**
    * 取消点赞评论
    */
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => Comment, { description: '取消点赞评论' })
   async unlikeComment(@Args() args: CommentIdArgs) {
     return this.commentsService.unlike(args.commentId);

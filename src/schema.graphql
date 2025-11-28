@@ -387,7 +387,7 @@ type Mutation {
   """创建审批请求"""
   createApprovalRequest(data: CreateApprovalRequestInput!): ApprovalRequest!
 
-  """创建新分类"""
+  """创建新分类（需要管理员权限）"""
   createCategory(data: CreateCategoryInput!): Category!
 
   """创建评论"""
@@ -397,10 +397,10 @@ type Mutation {
   """创建版本快照"""
   createRevision(data: CreateRevisionInput!): PostRevision!
 
-  """创建新标签"""
+  """创建新标签（需要管理员权限）"""
   createTag(data: CreateTagInput!): Tag!
 
-  """删除分类"""
+  """删除分类（需要管理员权限）"""
   deleteCategory(
     """分类 ID"""
     id: String!
@@ -425,7 +425,7 @@ type Mutation {
     revisionId: String!
   ): PostRevision!
 
-  """删除标签"""
+  """删除标签（需要管理员权限）"""
   deleteTag(
     """标签 ID"""
     id: String!
@@ -437,6 +437,9 @@ type Mutation {
     commentId: String!
   ): Comment!
   login(data: LoginInput!): Auth!
+
+  """记录文章浏览"""
+  recordView(data: RecordViewInput!): PostView!
   refreshToken(token: JWT!): Token!
 
   """拒绝审批请求（管理员）"""
@@ -464,7 +467,7 @@ type Mutation {
     commentId: String!
   ): Comment!
 
-  """更新分类"""
+  """更新分类（需要管理员权限）"""
   updateCategory(
     data: UpdateCategoryInput!
 
@@ -495,7 +498,7 @@ type Mutation {
   ): Media!
   updatePost(data: UpdatePostInput!): Post!
 
-  """更新标签"""
+  """更新标签（需要管理员权限）"""
   updateTag(
     data: UpdateTagInput!
 
@@ -751,6 +754,53 @@ enum PostStatus {
   TRASH
 }
 
+type PostView {
+  """Identifies the date and time when the object was created."""
+  createdAt: DateTime!
+  id: ID!
+
+  """IP 地址"""
+  ipAddress: String
+
+  """关联的文章"""
+  post: Post!
+
+  """关联的文章 ID"""
+  postId: String!
+
+  """Identifies the date and time when the object was last updated."""
+  updatedAt: DateTime!
+
+  """浏览者（未登录为 null）"""
+  user: User
+
+  """浏览器信息"""
+  userAgent: String
+
+  """浏览者 ID（未登录为 null）"""
+  userId: String
+}
+
+type PostViewStats {
+  """本月浏览次数"""
+  monthViews: Int!
+
+  """文章 ID"""
+  postId: String!
+
+  """今日浏览次数"""
+  todayViews: Int!
+
+  """总浏览次数"""
+  totalViews: Int!
+
+  """唯一访客数"""
+  uniqueVisitors: Int!
+
+  """本周浏览次数"""
+  weekViews: Int!
+}
+
 input ProcessApprovalInput {
   """审批意见/评论"""
   comment: String
@@ -840,6 +890,9 @@ type Query {
   """获取用户搜索历史"""
   mySearchHistory(limit: Int = 20): [SearchResult!]! @deprecated(reason: "返回类型待优化")
 
+  """获取当前用户的浏览历史"""
+  myViewHistory(limit: Int = 50): [PostView!]!
+
   """查询所有待审批的请求（管理员）"""
   pendingApprovalRequests: [ApprovalRequest!]!
 
@@ -853,6 +906,20 @@ type Query {
 
   """查询文章的所有版本历史"""
   postRevisions(postId: String!): [PostRevision!]!
+
+  """获取文章的浏览统计"""
+  postViewStats(
+    """文章 ID"""
+    postId: String!
+  ): PostViewStats!
+
+  """获取文章的浏览记录列表（需要管理员权限）"""
+  postViews(
+    limit: Int = 50
+
+    """文章 ID"""
+    postId: String!
+  ): [PostView!]!
   publishedPosts(orderBy: PostOrder, query: String): PostConnection!
 
   """查询单个版本"""
@@ -882,6 +949,17 @@ type Query {
   """获取顶级分类列表"""
   topLevelCategories: [Category!]!
   userPosts: [Post!]!
+}
+
+input RecordViewInput {
+  """IP 地址（可选）"""
+  ipAddress: String
+
+  """文章 ID"""
+  postId: String!
+
+  """浏览器信息（可选）"""
+  userAgent: String
 }
 
 type RevisionDiff {

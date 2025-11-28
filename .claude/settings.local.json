@@ -40,7 +40,9 @@
       "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" npm run prisma:generate:*)",
       "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"yes\" DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" npx prisma migrate:*)",
       "Bash(chmod:*)",
-      "Bash(/tmp/test_approval_workflow.sh)"
+      "Bash(/tmp/test_approval_workflow.sh)",
+      "Bash(/tmp/test_analytics.sh:*)",
+      "Bash(/tmp/fix_resolvers_security.sh)"
     ],
     "deny": [],
     "ask": []
