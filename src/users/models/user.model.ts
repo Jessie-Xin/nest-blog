@@ -3,6 +3,8 @@ import { ObjectType, HideField, Field } from '@nestjs/graphql';
 import { IsEmail } from 'class-validator';
 import { Post } from '../../posts/models/post.model';
 import { BaseModel } from '../../common/models/base.model';
+import { SystemRole } from '../../permissions/models/system-role.model';
+import { Permission } from '../../permissions/models/permission.model';
 
 /**
  * 用户模型
@@ -38,6 +40,23 @@ export class User extends BaseModel {
    */
   @Field(() => [Post], { nullable: true })
   posts?: [Post] | null;
+
+  /**
+   * 用户角色列表
+   * 用户被分配的所有角色
+   */
+  @Field(() => [SystemRole], { nullable: true, description: '用户的角色列表' })
+  roles?: SystemRole[];
+
+  /**
+   * 用户权限列表
+   * 从用户所有角色聚合而来的权限列表
+   */
+  @Field(() => [Permission], {
+    nullable: true,
+    description: '用户的所有权限（从角色聚合）',
+  })
+  permissions?: Permission[];
 
   /**
    * 用户密码

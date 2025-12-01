@@ -14,6 +14,8 @@ import { UsersService } from './users.service';
 import { User } from './models/user.model';
 import { ChangePasswordInput } from './dto/change-password.input';
 import { UpdateUserInput } from './dto/update-user.input';
+import { SystemRole } from '../permissions/models/system-role.model';
+import { Permission } from '../permissions/models/permission.model';
 
 /**
  * 用户解析器
@@ -85,5 +87,74 @@ export class UsersResolver {
   @ResolveField('posts')
   posts(@Parent() author: User) {
     return this.prisma.user.findUnique({ where: { id: author.id } }).posts();
+  }
+
+  /**
+   * 解析用户的角色列表字段
+   * 获取用户被分配的所有角色
+   * @param user 用户对象
+   * @returns 用户的角色列表
+   */
+  @ResolveField('roles', () => [SystemRole])
+  async roles(@Parent() user: User): Promise<SystemRole[]> {
+    const userRoles = await this.prisma.userRole.findMany({
+      where: {
+        userId: user.id,
+        // 只返回未过期的角色
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        role: { isActive: true },
+      },
+      include: {
+        role: true,
+      },
+    });
+
+    return userRoles
+      .map((ur) => ur.role)
+      .filter((role): role is NonNullable<typeof role> => role !== null);
+  }
+
+  /**
+   * 解析用户的权限列表字段
+   * 聚合用户所有角色的权限（去重）
+   * @param user 用户对象
+   * @returns 用户的所有权限列表
+   */
+  @ResolveField('permissions', () => [Permission])
+  async permissions(@Parent() user: User): Promise<Permission[]> {
+    // 获取用户所有未过期且启用的角色
+    const userRoles = await this.prisma.userRole.findMany({
+      where: {
+        userId: user.id,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        role: { isActive: true },
+      },
+      include: {
+        role: {
+          include: {
+            permissions: {
+              include: {
+                permission: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // 收集所有权限并去重
+    const permissionsMap = new Map();
+
+    userRoles.forEach((userRole) => {
+      if (userRole.role) {
+        userRole.role.permissions.forEach((rp) => {
+          if (rp.permission && !permissionsMap.has(rp.permission.id)) {
+            permissionsMap.set(rp.permission.id, rp.permission);
+          }
+        });
+      }
+    });
+
+    return Array.from(permissionsMap.values());
   }
 }

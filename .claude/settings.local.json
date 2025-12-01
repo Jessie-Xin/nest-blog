@@ -46,7 +46,9 @@
       "Bash(/tmp/test_dashboard.sh:*)",
       "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"yes\" DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" npx prisma migrate reset:*)",
       "Bash(npm view:*)",
-      "Bash(node --version:*)"
+      "Bash(node --version:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" timeout 10 npm run start:dev:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

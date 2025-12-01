@@ -28,7 +28,8 @@ export class AdminGuard implements CanActivate {
 
     // 检查用户是否拥有 "admin" 角色
     return user.roles.some(
-      (userRole: any) => userRole.role?.code === 'admin' && userRole.role?.isActive === true,
+      (userRole: any) =>
+        userRole.role?.code === 'admin' && userRole.role?.isActive === true,
     );
   }
 }

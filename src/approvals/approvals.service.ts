@@ -402,7 +402,8 @@ export class ApprovalsService {
 
     // 檢查用戶是否有管理員角色
     const isAdmin = user.roles?.some(
-      (userRole: any) => userRole.role?.code === 'admin' && userRole.role?.isActive === true
+      (userRole: any) =>
+        userRole.role?.code === 'admin' && userRole.role?.isActive === true,
     );
 
     if (!isAdmin) {

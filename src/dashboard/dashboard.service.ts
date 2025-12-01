@@ -159,9 +159,7 @@ export class DashboardService {
    * 获取最近活跃用户（按最后更新时间排序）
    * @param limit 返回数量限制
    */
-  async getRecentActiveUsers(
-    limit: number = 10,
-  ): Promise<RecentActiveUser[]> {
+  async getRecentActiveUsers(limit: number = 10): Promise<RecentActiveUser[]> {
     const users = await this.prisma.user.findMany({
       select: {
         id: true,
