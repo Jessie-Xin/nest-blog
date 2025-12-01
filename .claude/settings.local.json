@@ -48,7 +48,9 @@
       "Bash(npm view:*)",
       "Bash(node --version:*)",
       "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" timeout 10 npm run start:dev:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(./test_rbac.sh:*)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []
