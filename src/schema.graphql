@@ -514,6 +514,9 @@ type Mutation {
     version: Int!
   ): Post!
 
+  """手動觸發任務（需要管理員權限）"""
+  runTask(data: RunTaskInput!): String!
+
   """设置文章的标签（替换所有现有标签）"""
   setPostTags(postId: String!, tagIds: [String!]!): [Tag!]!
   signup(data: SignupInput!): Auth!
@@ -1091,6 +1094,18 @@ type Query {
   """获取所有标签列表"""
   tags: [Tag!]!
 
+  """根據 ID 查詢單個任務日誌（需要管理員權限）"""
+  taskLog(
+    """任務日誌 ID"""
+    id: String!
+  ): TaskLog
+
+  """查詢任務日誌列表（需要管理員權限）"""
+  taskLogs(filter: TaskLogFilterInput): [TaskLog!]!
+
+  """獲取任務統計信息（需要管理員權限）"""
+  taskStatistics: TaskStatistics!
+
   """获取顶级分类列表"""
   topLevelCategories: [Category!]!
   userPosts: [Post!]!
@@ -1148,6 +1163,15 @@ type RevisionDiff {
 
   """标题是否变更"""
   titleChanged: Boolean!
+}
+
+"""手動觸發任務的輸入"""
+input RunTaskInput {
+  """任務參數（JSON 字符串）"""
+  parameters: String
+
+  """任務名稱"""
+  taskName: String!
 }
 
 input SearchInput {
@@ -1252,6 +1276,103 @@ type Tag {
 
   """Identifies the date and time when the object was last updated."""
   updatedAt: DateTime!
+}
+
+"""任務執行日誌"""
+type TaskLog {
+  """任務完成時間"""
+  completedAt: DateTime
+
+  """Identifies the date and time when the object was created."""
+  createdAt: DateTime!
+
+  """執行時長（毫秒）"""
+  duration: Int
+
+  """錯誤信息"""
+  error: String
+  id: ID!
+
+  """執行結果（成功處理的數量等）"""
+  result: JSON
+
+  """任務開始時間"""
+  startedAt: DateTime
+
+  """任務狀態"""
+  status: TaskStatus!
+
+  """任務名稱"""
+  taskName: String!
+
+  """任務類型（cron、manual、system）"""
+  taskType: String!
+
+  """觸發方式（cron、manual、system）"""
+  triggeredBy: String
+
+  """Identifies the date and time when the object was last updated."""
+  updatedAt: DateTime!
+
+  """手動觸發的用戶 ID"""
+  userId: String
+}
+
+"""任務日誌篩選條件"""
+input TaskLogFilterInput {
+  """返回記錄數量（默認 50）"""
+  limit: Int = 50
+
+  """跳過的記錄數量（默認 0）"""
+  skip: Int = 0
+
+  """任務狀態"""
+  status: TaskStatus
+
+  """任務名稱"""
+  taskName: String
+
+  """觸發方式"""
+  triggeredBy: String
+}
+
+"""任務統計信息"""
+type TaskStatistics {
+  """平均執行時長（毫秒）"""
+  averageDuration: Int
+
+  """已完成任務數"""
+  completed: Int!
+
+  """失敗任務數"""
+  failed: Int!
+
+  """待執行任務數"""
+  pending: Int!
+
+  """執行中任務數"""
+  running: Int!
+
+  """成功率（百分比）"""
+  successRate: Int!
+
+  """總任務數"""
+  total: Int!
+}
+
+"""任務狀態"""
+enum TaskStatus {
+  """已完成"""
+  COMPLETED
+
+  """失敗"""
+  FAILED
+
+  """待執行"""
+  PENDING
+
+  """執行中"""
+  RUNNING
 }
 
 type Token {

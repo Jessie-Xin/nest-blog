@@ -50,7 +50,18 @@
       "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public&sslmode=prefer\" timeout 10 npm run start:dev:*)",
       "Bash(mkdir:*)",
       "Bash(./test_rbac.sh:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(docker ps:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public\" npm run migrate:dev:create:*)",
+      "Bash(npm run docker:migrate:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public\" npx prisma db push:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker volume rm:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:MyStr0ng!P@ssw0rd2024@localhost:5432/blog?schema=public\" npm run seed:*)",
+      "Bash(/tmp/test_scheduler.sh:*)",
+      "Bash(/tmp/test_scheduler_full.sh)"
     ],
     "deny": [],
     "ask": []

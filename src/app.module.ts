@@ -18,6 +18,7 @@ import { ApprovalsModule } from './approvals/approvals.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PermissionsModule } from './permissions/permissions.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 import config from './common/configs/config';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GqlConfigService } from './gql-config.service';
@@ -53,6 +54,7 @@ import { GqlConfigService } from './gql-config.service';
     AnalyticsModule, // 新增访问统计模块
     DashboardModule, // 新增仪表板统计模块
     PermissionsModule, // 新增权限管理模块（RBAC）
+    SchedulerModule, // 新增定时任务模块
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],

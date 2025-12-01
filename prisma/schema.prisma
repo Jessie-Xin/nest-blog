@@ -599,3 +599,44 @@ model UserRole {
   @@index([roleId])
   @@index([expiresAt])
 }
+
+// ============================================
+// 定时任务系统
+// ============================================
+
+// 任务执行日志表
+model TaskLog {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 任务信息
+  taskName    String   @db.VarChar(100) // 任务名称（如：publishScheduledPosts、cleanupOldData）
+  taskType    String   @db.VarChar(50) // 任务类型（如：cron、manual）
+  status      TaskStatus // 任务状态
+
+  // 执行信息
+  startedAt   DateTime? // 任务开始时间
+  completedAt DateTime? // 任务完成时间
+  duration    Int?      // 执行时长（毫秒）
+
+  // 结果信息
+  result      Json?     // 执行结果（成功处理的数量等）
+  error       String?   @db.Text // 错误信息（如果失败）
+
+  // 触发信息
+  triggeredBy String?   @db.VarChar(50) // 触发方式（cron、manual、system）
+  userId      String?   // 手动触发的用户ID（如果有）
+
+  @@index([taskName])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// 任务状态枚举
+enum TaskStatus {
+  PENDING   // 待执行
+  RUNNING   // 执行中
+  COMPLETED // 已完成
+  FAILED    // 失败
+}
